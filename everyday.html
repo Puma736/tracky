@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Everyday — Agenda ejecutiva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E4EBF4; --paper:#FFFFFF; --ink:#0B2545; --ink-2:#34507A; --ink-3:#7189AD;
+    --line:#C7D5E6; --line-soft:#E2EAF3; --navy:#0B2545; --navy-2:#13315C; --sky:#DCE9F8;
+    --alta:#C0392B; --media:#1F5FBF; --baja:#7FA1CC; --ok:#1A8A7A; --warn:#D68A1E;
+    --r-s:6px; --r-m:12px; --r-l:20px;
+    --sans:'Manrope',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,textarea,select{font:inherit;color:inherit}
+  input:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--media);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  .side{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:28px 20px;display:flex;flex-direction:column;gap:32px;position:sticky;top:0;height:100vh}
+  .brand{font-weight:800;font-size:22px;letter-spacing:-.02em}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#8FB0DD;letter-spacing:0;margin-top:2px}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav button{text-align:left;padding:10px 12px;border-radius:var(--r-s);color:#BBD0EC;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+  .nav button.active{background:#fff;color:var(--ink)}
+  .nav button span.n{font-size:12px;font-weight:600;color:var(--ink-3)}
+  .nav button.active span.n{color:var(--media)}
+  .side-foot{margin-top:auto;font-size:12px;color:#8FB0DD;line-height:1.6}
+  .side-foot b{color:#fff;font-weight:600}
+  main{padding:36px 40px 80px;max-width:1240px;width:100%}
+  .view{display:none}.view.active{display:block}
+
+  /* ---------- Common ---------- */
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  .ctrl{display:flex;gap:6px;align-items:center}
+  .btn{padding:8px 14px;border-radius:var(--r-s);background:var(--paper);border:1px solid var(--line);font-weight:600;font-size:14px}
+  .btn:hover{border-color:var(--ink-3)}
+  .btn.primary{background:var(--media);color:#fff;border-color:var(--media)}
+  .btn.icon{width:36px;padding:0;height:36px;display:grid;place-items:center;font-size:18px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-m)}
+  .muted{color:var(--ink-3)}
+  .empty{padding:28px 16px;text-align:center;color:var(--ink-3);font-size:14px}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+  .dot.alta{background:var(--alta)}.dot.media{background:var(--media)}.dot.baja{background:var(--baja)}
+
+  /* ---------- Hoy ---------- */
+  .hero{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:end;margin-bottom:28px}
+  .bigdate{line-height:.85;font-weight:800;letter-spacing:-.05em;font-size:clamp(88px,14vw,160px)}
+  .datemeta{padding-bottom:10px}
+  .datemeta .dow{font-size:30px;font-weight:800;letter-spacing:-.02em;text-transform:capitalize}
+  .datemeta .my{font-size:16px;color:var(--ink-2);text-transform:capitalize}
+  .progress{margin-top:14px;height:6px;background:var(--line);border-radius:99px;overflow:hidden;max-width:320px}
+  .progress i{display:block;height:100%;background:var(--ok);width:0;transition:width .35s ease}
+  .progress-label{font-size:13px;color:var(--ink-2);margin-top:6px}
+  .today-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+  .adder{display:grid;grid-template-columns:1fr 92px 110px auto;gap:8px;padding:12px;border-bottom:1px solid var(--line-soft)}
+  .adder input,.adder select{padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:#FAFBFC}
+  .tasks{list-style:none}
+  .task{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+  .task:last-child{border-bottom:0}
+  .task.done .title{text-decoration:line-through;color:var(--ink-3)}
+  .chk{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;display:grid;place-items:center;transition:background .15s,border-color .15s}
+  .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .chk svg{width:14px;height:14px;opacity:0;transform:scale(.6);transition:all .15s}
+  .chk.on svg{opacity:1;transform:scale(1)}
+  .task .title{font-weight:600;display:flex;align-items:center;gap:8px;min-width:0}
+  .task .title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .task .time{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .task .del{color:var(--ink-3);font-size:18px;line-height:1;padding:4px 6px;border-radius:4px}
+  .task .del:hover{color:var(--alta);background:#FCEBEB}
+  .carried{border-color:#E8D3A8;background:#FFF8EC}
+  .carried h3{font-size:14px;padding:12px 14px 6px;color:#9A5B10}
+  .carried .task{border-color:#F6E4C8}
+  .carried .from{font-size:12px;color:#9A5B10}
+  .carried .move{font-size:12px;font-weight:600;color:#9A5B10;padding:4px 8px;border:1px solid #F3D3A6;border-radius:4px;background:#fff}
+  .notes{padding:14px}
+  .notes h3{font-size:14px;margin-bottom:8px}
+  .notes textarea{width:100%;min-height:200px;border:0;resize:vertical;background:repeating-linear-gradient(transparent,transparent 27px,var(--line-soft) 27px,var(--line-soft) 28px);line-height:28px;padding:0 2px}
+  .notes textarea:focus{outline:none}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--ink-2);padding:12px 14px}
+  .legend span{display:flex;gap:6px;align-items:center}
+
+  /* ---------- Semana ---------- */
+  .week-goals{padding:14px 16px;margin-bottom:20px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+  .week-goals h3{font-size:14px;white-space:nowrap;padding-top:8px}
+  .goals{display:flex;flex-wrap:wrap;gap:8px}
+  .goal{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border:1px solid var(--line);border-radius:99px;font-size:14px;font-weight:600}
+  .goal.on{text-decoration:line-through;color:var(--ink-3)}
+  .goal button{color:var(--ink-3);font-size:16px;line-height:1}
+  .goal-add{display:flex;gap:6px}
+  .goal-add input{padding:6px 12px;border:1px dashed var(--line);border-radius:99px;min-width:220px;background:transparent}
+  .goal-add .btn{padding:4px 12px;border-radius:99px}
+  .wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .wk-stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-m);padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+  .wk-stat small{font-size:12px;color:var(--ink-3);font-weight:600}
+  .wk-stat b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .wk-stat b span{font-size:13px;color:var(--ink-2);font-weight:600;margin-left:4px}
+  .wk-stat.warn b{color:var(--alta)}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+  .day{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-m);min-height:280px;display:flex;flex-direction:column;transition:border-color .15s,background .15s}
+  .day.today{border-color:var(--ink);box-shadow:inset 0 3px 0 var(--ink)}
+  .day.past{background:#FAFCFE}
+  .day.over{background:var(--sky);border-color:var(--media)}
+  .day-h{padding:10px 12px 8px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;border-radius:var(--r-m) var(--r-m) 0 0;position:relative}
+  .day-h:hover{background:var(--sky)}
+  .day-h:hover::after{content:'abrir ›';position:absolute;right:12px;bottom:-14px;font-size:10px;font-weight:700;color:var(--media);background:var(--paper);padding:0 4px;border-radius:3px;z-index:1}
+  .day-h b{font-size:13px;text-transform:capitalize}
+  .day-h .num{font-size:22px;font-weight:800;letter-spacing:-.03em}
+  .dprog{display:flex;align-items:center;gap:6px;margin:8px 12px 4px;font-size:11px;color:var(--ink-3);font-weight:600}
+  .dprog .bar{flex:1;height:5px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+  .dprog .bar i{display:block;height:100%;background:var(--ok);transition:width .2s}
+  .dprog .bar i.warn{background:var(--warn)}.dprog .bar i.alta{background:var(--alta)}
+  .chip.late{border-left:3px solid var(--alta)}
+  .chip em{font-style:normal;font-size:11px;color:var(--ink-3);font-weight:600}
+  .chip .cdot{width:14px;height:14px;border:1.5px solid var(--line);border-radius:4px;flex:none;display:grid;place-items:center;color:#fff}
+  .chip .cdot svg{width:10px;height:10px;opacity:0}
+  .chip.done .cdot{background:var(--ok);border-color:var(--ok)}.chip.done .cdot svg{opacity:1}
+  .chip.rt{background:transparent;border:1px dashed var(--line);cursor:pointer;font-weight:500}
+  .chip.rt .cdot{border-radius:50%}
+  .day .sub{font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px 0}
+  .load{height:3px;margin:0 12px 8px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+  .load i{display:block;height:100%}
+  .load.l1 i{width:33%;background:var(--ok)}.load.l2 i{width:66%;background:var(--warn)}.load.l3 i{width:100%;background:var(--alta)}
+  .day ul{list-style:none;padding:6px 8px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .chip{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--r-s);background:#F1F6FC;font-size:13px;font-weight:600;cursor:grab;border:1px solid transparent}
+  .chip:hover{border-color:var(--line)}
+  .chip.done{color:var(--ink-3);text-decoration:line-through}
+  .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .chip .mv{display:none;gap:2px}
+  .chip:hover .mv{display:flex}
+  .chip .mv button{font-size:11px;padding:1px 4px;border-radius:3px;color:var(--ink-2)}
+  .chip .mv button:hover{background:var(--line)}
+  .day-add{margin:0 8px 8px;padding:7px 8px;border:1px dashed var(--line);border-radius:var(--r-s);font-size:13px;background:transparent;width:calc(100% - 16px);font-family:var(--sans)}
+  .day-add:focus{border-style:solid;border-color:var(--media);outline:none;background:#fff}
+
+  /* ---------- Mes ---------- */
+  .month-layout{display:grid;grid-template-columns:1fr 300px;gap:20px}
+  .cal-head{display:grid;grid-template-columns:repeat(7,1fr);padding:10px 0 6px;border-bottom:1px solid var(--line-soft)}
+  .cal-head div{text-align:center;font-size:12px;font-weight:600;color:var(--ink-3);text-transform:capitalize}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line-soft);border-top:0}
+  .cell{background:var(--paper);min-height:96px;padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:background .15s}
+  .cell:hover{background:var(--sky)}
+  .cell.other{color:var(--ink-3);background:#FBFCFD}
+  .cell .d{font-weight:700;font-size:14px;width:26px;height:26px;display:grid;place-items:center;border-radius:50%}
+  .cell.today .d{background:var(--ink);color:#fff}
+  .cell .mini{font-size:11px;font-weight:600;line-height:1.3;display:flex;gap:4px;align-items:center;overflow:hidden}
+  .cell .mini span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cell .more{font-size:11px;color:var(--ink-3)}
+  .side-goals{padding:16px}
+  .side-goals h3{font-size:14px;margin-bottom:10px}
+  .side-goals .goals{flex-direction:column;align-items:stretch}
+  .side-goals .goal{border-radius:var(--r-s)}
+  .side-goals .goal-add input{width:100%;min-width:0;border-radius:var(--r-s)}
+  .stat{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line-soft);font-size:14px}
+  .stat b{font-weight:800;font-size:20px;letter-spacing:-.02em}
+
+  /* ---------- Año ---------- */
+  .year{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .ym{padding:12px;cursor:pointer;transition:border-color .15s}
+  .ym:hover{border-color:var(--ink)}
+  .ym h4{font-size:14px;text-transform:capitalize;display:flex;justify-content:space-between;margin-bottom:8px}
+  .ym h4 span{font-weight:500;color:var(--ink-3);font-size:12px}
+  .ym .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .ym .g i{display:block;aspect-ratio:1;border-radius:3px;background:var(--line-soft);font-style:normal;font-size:9px;display:grid;place-items:center;color:var(--ink-3)}
+  .ym .g i.a1{background:#C9DDF5}.ym .g i.a2{background:#6E9FDD;color:#fff}.ym .g i.a3{background:var(--navy);color:#fff}
+  .ym .g i.t{outline:2px solid var(--ink);outline-offset:-1px;color:var(--ink);font-weight:800}
+  .ym .g i.pad{background:transparent}
+  .year-key{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--ink-2);margin-top:14px}
+  .year-key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  /* ---------- Reportes ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .kpi{padding:14px 16px}
+  .kpi small{display:block;font-size:13px;color:var(--ink-2)}
+  .kpi b{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+  .rep-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .rep-filters .btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .rep-group{margin-bottom:14px;overflow:hidden}
+  .rep-h{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 16px;cursor:pointer;background:#F1F6FC;border-bottom:1px solid var(--line-soft)}
+  .rep-h h3{font-size:16px;text-transform:capitalize}
+  .rep-h .bar{height:8px;width:180px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+  .rep-h .bar i{display:block;height:100%;background:var(--ok)}
+  .rep-h .meta{font-size:13px;color:var(--ink-2);text-align:right;white-space:nowrap}
+  .rep-h .meta b{color:var(--ink)}
+  .rep-body{display:none}.rep-group.open .rep-body{display:block}
+  .rep-sub{padding:8px 16px 4px;font-size:12px;font-weight:700;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+  .rep-row{display:grid;grid-template-columns:80px 1fr auto;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line-soft);font-size:14px;align-items:center}
+  .rep-row .dt{color:var(--ink-2);font-variant-numeric:tabular-nums;font-size:13px}
+  .rep-row.done .t{text-decoration:line-through;color:var(--ink-3)}
+  .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line-soft);color:var(--ink-2)}
+  .tag.ok{background:#DDF1EE;color:var(--ok)}.tag.pend{background:#F9E3E0;color:var(--alta)}
+  .remind{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;margin-bottom:20px;overflow:hidden}
+  .remind>div{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .remind>div+div{border-left:1px solid var(--line-soft)}
+  .remind h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .remind h3 .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex:none;font-size:14px}
+  .remind p{font-size:13px;color:var(--ink-2);line-height:1.5}
+  .remind .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .remind select,.remind input[type=text],.remind input[type=time]{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r-s);font-size:13px;background:#F7FAFE}
+  .remind .btn.wa{background:#25D366;border-color:#25D366;color:#fff;display:inline-flex;align-items:center;gap:8px}
+  .remind .btn.wa:hover{background:#1EBE5A}
+  .remind details{font-size:12px;color:var(--ink-2)}
+  .remind summary{cursor:pointer;font-weight:600}
+  .remind pre{white-space:pre-wrap;font-family:var(--sans);font-size:12px;background:#F7FAFE;border:1px solid var(--line-soft);border-radius:var(--r-s);padding:10px;margin-top:6px;max-height:220px;overflow:auto}
+  .switch{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:14px;cursor:pointer}
+  .switch input{appearance:none;width:40px;height:22px;border-radius:99px;background:var(--line);position:relative;transition:background .15s;cursor:pointer}
+  .switch input::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+  .switch input:checked{background:var(--ok)}.switch input:checked::after{left:21px}
+  .nt-status{font-size:12px;color:var(--ink-3)}
+  .nt-status.on{color:var(--ok);font-weight:700}.nt-status.off{color:var(--alta);font-weight:700}
+  @media print{.side,.topbar .ctrl,.rep-filters,.remind{display:none!important}main{padding:0}.rep-body{display:block!important}.app{grid-template-columns:1fr}}
+  @media (max-width:900px){.remind{grid-template-columns:1fr}.remind>div+div{border-left:0;border-top:1px solid var(--line-soft)}.wk-stats{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.rep-h .bar{width:100px}.nav button{font-size:12px}}
+
+  /* ---------- Rutinas (diario) ---------- */
+  .routines h3{font-size:14px;padding:12px 14px 4px;display:flex;justify-content:space-between;align-items:center}
+  .routines h3 button{font-size:12px;font-weight:600;color:var(--media)}
+  .rt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+  .rt:last-child{border:0}
+  .rt .title{font-weight:600}.rt.done .title{color:var(--ink-3);text-decoration:line-through}
+  .rt .freq{font-size:12px;color:var(--ink-3)}
+  .rt-form{padding:12px 14px;border-top:1px solid var(--line-soft);display:grid;gap:8px;background:#F1F6FC}
+  .rt-form input[type=text],.rt-form select{padding:9px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:#fff;width:100%}
+  .rt-form .days{display:flex;gap:4px}
+  .rt-form .days label{flex:1;text-align:center;font-size:12px;font-weight:700;padding:6px 0;border:1px solid var(--line);border-radius:var(--r-s);background:#fff;cursor:pointer;text-transform:capitalize}
+  .rt-form .days input{display:none}
+  .rt-form .days input:checked+span{color:var(--media)}
+  .rt-form .days label:has(input:checked){border-color:var(--media);background:var(--sky)}
+  /* ---------- Dashboard rendimiento ---------- */
+  .grade{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;font-weight:800;font-size:20px;color:#fff}
+  .gA{background:#0B2545}.gB{background:#1F5FBF}.gC{background:#5E8FD6}.gD{background:#D68A1E}.gE{background:#C0392B}
+  .perf-hero{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;padding:20px 24px;margin-bottom:20px}
+  .perf-hero .big{font-size:72px;font-weight:800;letter-spacing:-.05em;line-height:1}
+  .perf-hero .big small{font-size:24px;color:var(--ink-3);letter-spacing:0}
+  .perf-hero p{color:var(--ink-2);max-width:60ch}
+  .perf-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .perf-card{padding:16px}
+  .perf-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+  .perf-top h4{font-size:15px}
+  .perf-top .freq{font-size:12px;color:var(--ink-3);display:block;font-weight:500}
+  .perf-stats{display:flex;gap:18px;font-size:13px;color:var(--ink-2);margin-bottom:10px}
+  .perf-stats b{display:block;font-size:20px;color:var(--ink);font-weight:800;letter-spacing:-.02em}
+  .hist{display:flex;gap:3px}
+  .hist i{flex:1;height:22px;border-radius:4px;background:var(--line-soft)}
+  .hist i.ok{background:var(--media)}.hist i.miss{background:#F1C9C4}.hist i.na{background:transparent;border:1px dashed var(--line)}
+  .hist-l{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:4px}
+  .wchart{padding:16px;margin-bottom:20px}
+  .wchart h3{font-size:14px;margin-bottom:12px}
+  .bars{display:flex;gap:10px;align-items:flex-end;height:140px}
+  .bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .bars .b i{width:100%;border-radius:4px 4px 0 0;background:var(--media);min-height:2px}
+  .bars .b i.cur{background:var(--navy)}
+  .bars .b small{font-size:11px;color:var(--ink-3);white-space:nowrap}
+  .bars .b em{font-style:normal;font-size:11px;font-weight:700}
+  @media (max-width:720px){.perf-grid{grid-template-columns:1fr}.perf-hero{grid-template-columns:1fr}.bars .b:nth-child(-n+4){display:none}}
+
+  /* ---------- Panel BI ---------- */
+  .bi-sec{margin-bottom:24px}
+  .bi-sec>h3{font-size:13px;font-weight:700;color:var(--ink-3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .tile{padding:12px 14px;border-left:4px solid var(--media)}
+  .tile small{display:block;font-size:12px;color:var(--ink-2)}
+  .tile b{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+  .tile .d{font-size:12px;font-weight:600}
+  .tile .up{color:var(--ok)}.tile .dn{color:var(--alta)}
+  .bi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .bi-grid.two{grid-template-columns:2fr 1fr}
+  .chart{padding:14px 16px}
+  .chart h4{font-size:14px;margin-bottom:4px}
+  .chart p{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .chart svg{width:100%;height:auto;display:block;font-family:var(--sans)}
+  .lg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink-2);margin-top:8px}
+  .lg span{display:flex;align-items:center;gap:5px}.lg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .proj{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .proj .card{padding:14px 16px}
+  .proj h4{font-size:14px;margin-bottom:6px}
+  .proj .v{font-size:30px;font-weight:800;letter-spacing:-.03em}
+  .proj .v small{font-size:13px;color:var(--ink-3);font-weight:600;letter-spacing:0;margin-left:6px}
+  .proj p{font-size:13px;color:var(--ink-2);margin-top:4px}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{text-align:left;font-weight:700;color:var(--ink-2);padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+  .tbl th.s::after{content:' ▾';color:var(--media)}
+  .tbl td{padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  .tbl tr:last-child td{border:0}
+  .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+  .mini-bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;min-width:70px}
+  .mini-bar i{display:block;height:100%;background:var(--ok)}
+  .tbl-tools{display:flex;gap:8px;flex-wrap:wrap;padding:12px;border-bottom:1px solid var(--line-soft)}
+  .tbl-tools input,.tbl-tools select{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r-s);background:#fff;font-size:13px}
+  .tbl-wrap{overflow-x:auto}
+  @media (max-width:1000px){.tiles{grid-template-columns:repeat(3,1fr)}.bi-grid,.bi-grid.two,.proj{grid-template-columns:1fr}}
+  @media (max-width:720px){.tiles{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- Rendimiento dinámico ---------- */
+  .perf-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-s);overflow:hidden;background:#fff}
+  .seg button{padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink-2)}
+  .seg button.on{background:var(--navy);color:#fff}
+  .rchips{display:flex;gap:6px;flex-wrap:wrap}
+  .rchip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);font-size:12px;font-weight:600;background:#fff;color:var(--ink-2)}
+  .rchip.on{border-color:var(--media);background:var(--sky);color:var(--ink)}
+  .rchip i{width:10px;height:10px;border-radius:50%}
+  .rchip.off i{opacity:.25}
+  .tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;z-index:20;opacity:0;transition:opacity .1s;white-space:nowrap}
+  .tip.show{opacity:1}
+  .chart svg .hv{cursor:pointer}
+  .chart svg .bar{transition:opacity .15s}.chart svg .bar:hover{opacity:.75}
+  .perf-two{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:20px}
+  @media (max-width:1000px){.perf-two{grid-template-columns:1fr}}
+
+  /* ---------- Bloqueo (PIN) ---------- */
+  .lock{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,var(--navy) 0%,var(--navy-2) 60%,#1F4A8A 100%);display:grid;place-items:center;padding:24px}
+  .lock-card{background:var(--paper);border-radius:var(--r-l);padding:36px 32px;width:min(420px,100%);box-shadow:0 30px 80px rgba(3,20,50,.45);display:flex;flex-direction:column;gap:14px}
+  .lock-card .brand{color:var(--ink)}
+  .lock-card .brand small{color:var(--ink-3)}
+  .lock-card h2{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+  .lock-card p{font-size:13px;color:var(--ink-2);line-height:1.55}
+  .lock-card input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-s);font-size:24px;letter-spacing:.35em;text-align:center;background:#F7FAFE}
+  .lock-card input::placeholder{letter-spacing:normal;font-size:15px;color:var(--ink-3)}
+  .lock-card .btn.primary{padding:12px;font-size:15px}
+  .lock-err{min-height:18px;font-size:13px;color:var(--alta);font-weight:600}
+  .lock-foot{font-size:12px!important;color:var(--ink-3)!important;border-top:1px solid var(--line-soft);padding-top:12px;display:flex;gap:8px;align-items:flex-start}
+  .lock-foot svg{flex:none;margin-top:2px}
+  .nav .lockbtn{margin-top:8px;border:1px solid rgba(255,255,255,.18);justify-content:center;gap:8px}
+  .nav .lockbtn:hover{background:rgba(255,255,255,.12)}
+
+  /* ---------- Privacidad ---------- */
+  .priv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+  .priv-grid .card{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+  .priv-grid h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .priv-grid h3 .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--sky);color:var(--media);flex:none}
+  .priv-grid p{font-size:13px;color:var(--ink-2);line-height:1.55}
+  .priv-grid .ok-line{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-2)}
+  .priv-grid .ok-line b{color:var(--ok);flex:none}
+  .priv-grid input[type=password],.priv-grid textarea,.priv-grid select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-s);font-size:14px;background:#F7FAFE}
+  .priv-grid textarea{min-height:76px;resize:vertical;font-family:var(--sans)}
+  .priv-grid .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .priv-grid .btn.danger{background:var(--alta);color:#fff;border-color:var(--alta)}
+  .priv-grid .cats{display:flex;flex-direction:column;gap:6px;font-size:13px}
+  .priv-grid .cats>span{display:flex;gap:8px;align-items:baseline}
+  .priv-grid .cats i{width:8px;height:8px;border-radius:50%;background:var(--alta);flex:none;position:relative;top:-1px}
+  .priv-grid .cats b{color:var(--ink)}
+  .priv-status{display:inline-flex;align-items:center;gap:6px;background:#E3F5F1;color:var(--ok);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+  .priv-status i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+  /* ---------- Toast ---------- */
+  .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:var(--navy);color:#fff;padding:10px 16px;border-radius:var(--r-s);font-size:14px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1000px){
+    .today-grid,.month-layout{grid-template-columns:1fr}
+    .week{grid-template-columns:repeat(4,1fr)}
+    .year{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:720px){
+    .app{grid-template-columns:1fr}
+    .side{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;padding:8px 10px;flex-direction:row;gap:0;z-index:10}
+    .brand,.side-foot{display:none}
+    .nav{flex-direction:row;width:100%;gap:4px}
+    .nav button{flex:1;justify-content:center;padding:10px 4px;font-size:13px}
+    .nav button span.n{display:none}
+    main{padding:20px 16px 90px}
+    .hero{grid-template-columns:1fr;gap:6px}
+    .adder{grid-template-columns:1fr 1fr;}
+    .adder input[type=text]{grid-column:1/-1}
+    .week{grid-template-columns:repeat(2,1fr)}
+    .year{grid-template-columns:repeat(2,1fr)}
+    .cell{min-height:64px;padding:5px}
+    .cell .mini span{display:none}
+    .week-goals{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="lock" id="lock">
+  <div class="lock-card">
+    <div class="brand">Everyday<small>Agenda ejecutiva</small></div>
+    <h2 id="lk-title">Introduce tu PIN</h2>
+    <p id="lk-sub">Tus datos están cifrados. Solo con el PIN se pueden leer.</p>
+    <input type="password" id="lk-pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="PIN" aria-label="PIN">
+    <input type="password" id="lk-pin2" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="Repite el PIN" aria-label="Repite el PIN" hidden>
+    <div class="lock-err" id="lk-err" aria-live="polite"></div>
+    <button class="btn primary" type="button" id="lk-go">Entrar</button>
+    <p class="lock-foot"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg><span id="lk-foot">Los datos se guardan cifrados (AES-256) únicamente en este navegador. No se envían a ningún servidor. Si olvidas el PIN, no hay forma de recuperarlos.</span></p>
+  </div>
+</div>
+<div class="app" id="app" hidden>
+  <aside class="side">
+    <div class="brand">Everyday<small>Agenda ejecutiva</small></div>
+    <nav class="nav" id="nav">
+      <button data-view="hoy" class="active">Hoy <span class="n" id="n-hoy"></span></button>
+      <button data-view="semana">Semana <span class="n" id="n-semana"></span></button>
+      <button data-view="mes">Mes <span class="n" id="n-mes"></span></button>
+      <button data-view="anio">Año <span class="n" id="n-anio"></span></button>
+      <button data-view="reportes">Reportes</button>
+      <button data-view="rendimiento">Rendimiento</button>
+      <button data-view="panel">Panel BI</button>
+      <button data-view="privacidad">Privacidad</button>
+      <button type="button" class="lockbtn" id="lock-now" data-noview><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>Bloquear</button>
+    </nav>
+    <div class="side-foot">Lo que planificas hoy se refleja en tu semana y tu mes, <b>sin doble trabajo</b>.</div>
+  </aside>
+
+  <main>
+    <!-- HOY -->
+    <section class="view active" id="view-hoy">
+      <div class="topbar">
+        <div class="ctrl">
+          <button class="btn icon" id="d-prev" aria-label="Día anterior">‹</button>
+          <button class="btn" id="d-today">Ir a hoy</button>
+          <button class="btn icon" id="d-next" aria-label="Día siguiente">›</button>
+        </div>
+        <span class="muted" id="d-summary"></span>
+      </div>
+      <div class="hero">
+        <div class="bigdate" id="d-num">13</div>
+        <div class="datemeta">
+          <div class="dow" id="d-dow">domingo</div>
+          <div class="my" id="d-my">septiembre 2026</div>
+          <div class="progress"><i id="d-bar"></i></div>
+          <div class="progress-label" id="d-plabel">Sin tareas todavía</div>
+        </div>
+      </div>
+      <div class="today-grid">
+        <div class="stack">
+          <div class="card">
+            <div class="adder" id="adder">
+              <input type="text" id="a-title" placeholder="Nueva tarea para este día…" required autocomplete="off">
+              <input type="time" id="a-time" aria-label="Hora">
+              <select id="a-prio" aria-label="Prioridad">
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="baja">Baja</option>
+              </select>
+              <button class="btn primary" type="button" id="a-add">Agregar</button>
+            </div>
+            <ul class="tasks" id="d-list"></ul>
+            <div class="legend"><span><i class="dot alta"></i>Alta</span><span><i class="dot media"></i>Media</span><span><i class="dot baja"></i>Baja</span></div>
+          </div>
+          <div class="card routines" id="d-routines">
+            <h3>Actividades repetitivas <button id="rt-toggle" type="button">+ Nueva rutina</button></h3>
+            <div id="rt-list"></div>
+            <div class="rt-form" id="rt-form" hidden>
+              <input type="text" id="rt-title" placeholder="Nombre de la actividad (ej. Revisar correo, Ejercicio…)" maxlength="60">
+              <select id="rt-freq"><option value="diaria">Todos los días</option><option value="semanal">Días específicos de la semana</option></select>
+              <div class="days" id="rt-days" hidden></div>
+              <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" id="rt-cancel" type="button">Cancelar</button><button class="btn primary" id="rt-save" type="button">Guardar rutina</button></div>
+            </div>
+          </div>
+          <div class="card carried" id="d-carried" hidden>
+            <h3>Pendientes de días anteriores</h3>
+            <ul class="tasks" id="d-carried-list"></ul>
+          </div>
+        </div>
+        <div class="card notes">
+          <h3>Notas del día</h3>
+          <textarea id="d-notes" placeholder="Ideas, llamadas, cosas que no quieres olvidar…"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEMANA -->
+    <section class="view" id="view-semana">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em" id="w-title">Semana</h2>
+          <span class="muted" id="w-sub"></span>
+        </div>
+        <div class="ctrl">
+          <button class="btn icon" id="w-prev" aria-label="Semana anterior">‹</button>
+          <button class="btn" id="w-today">Esta semana</button>
+          <button class="btn icon" id="w-next" aria-label="Semana siguiente">›</button>
+        </div>
+      </div>
+      <div class="card week-goals">
+        <h3>Objetivos de la semana</h3>
+        <div class="goals" id="w-goals"></div>
+      </div>
+      <div class="wk-stats" id="w-stats"></div>
+      <div class="week" id="week"></div>
+      <p class="muted" style="font-size:13px;margin-top:12px">Toca el encabezado de un día para abrirlo en la vista diaria. Marca una tarea o rutina para completarla, arrastra una tarea a otro día para moverla, o usa las flechas al pasar el cursor.</p>
+    </section>
+
+    <!-- MES -->
+    <section class="view" id="view-mes">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;text-transform:capitalize" id="m-title">Mes</h2>
+          <span class="muted">Toca un día para abrirlo en la vista diaria.</span>
+        </div>
+        <div class="ctrl">
+          <button class="btn icon" id="m-prev" aria-label="Mes anterior">‹</button>
+          <button class="btn" id="m-today">Este mes</button>
+          <button class="btn icon" id="m-next" aria-label="Mes siguiente">›</button>
+        </div>
+      </div>
+      <div class="month-layout">
+        <div class="card" style="overflow:hidden">
+          <div class="cal-head" id="cal-head"></div>
+          <div class="cal" id="cal"></div>
+        </div>
+        <div class="stack">
+          <div class="card side-goals">
+            <h3>Metas del mes</h3>
+            <div class="goals" id="m-goals"></div>
+          </div>
+          <div class="card side-goals">
+            <h3>Resumen</h3>
+            <div class="stat"><span>Tareas del mes</span><b id="m-total">0</b></div>
+            <div class="stat"><span>Completadas</span><b id="m-done">0</b></div>
+            <div class="stat"><span>Prioridad alta pendiente</span><b id="m-alta">0</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AÑO -->
+    <section class="view" id="view-anio">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em" id="y-title">2026</h2>
+          <span class="muted">Un vistazo a todo el año. Toca un mes para abrirlo.</span>
+        </div>
+        <div class="ctrl">
+          <button class="btn icon" id="y-prev" aria-label="Año anterior">‹</button>
+          <button class="btn" id="y-today">Este año</button>
+          <button class="btn icon" id="y-next" aria-label="Año siguiente">›</button>
+        </div>
+      </div>
+      <div class="year" id="year"></div>
+      <div class="year-key">Actividad por día: <i style="background:var(--line-soft)"></i> ninguna <i style="background:#C9DDF5"></i> 1 <i style="background:#6E9FDD"></i> 2–3 <i style="background:var(--navy)"></i> 4+</div>
+    </section>
+    <!-- REPORTES -->
+    <section class="view" id="view-reportes">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em" id="r-title">Reporte 2026</h2>
+          <span class="muted">Todas las tareas del año, agrupadas por mes o por prioridad.</span>
+        </div>
+        <div class="ctrl">
+          <button class="btn icon" id="r-prev" aria-label="Año anterior">‹</button>
+          <button class="btn" id="r-today">Este año</button>
+          <button class="btn icon" id="r-next" aria-label="Año siguiente">›</button>
+          <button class="btn primary" id="r-print">Imprimir / PDF</button>
+        </div>
+      </div>
+      <div class="card remind" id="r-remind">
+        <div>
+          <h3><span class="ico" style="background:#E6F9EE;color:#1EBE5A"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.5-1.4-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.5c0-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.5 3.9 1.6.7 2.2.7 3 .6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.3z"/></svg></span>Recordatorio por WhatsApp</h3>
+          <p>Genera un mensaje con tus pendientes y lo abre en WhatsApp listo para enviar: a tu propio número, a un familiar o a un colaborador.</p>
+          <div class="row">
+            <select id="wa-scope" aria-label="Contenido del recordatorio"><option value="hoy">Pendientes de hoy</option><option value="manana">Pendientes de mañana</option><option value="semana">Toda esta semana</option><option value="urgente">Vencidas y prioridad alta</option></select>
+            <input type="text" id="wa-phone" inputmode="numeric" placeholder="Número con código de país (opcional), ej. 59170000000" style="flex:1;min-width:220px">
+          </div>
+          <div class="row"><button class="btn wa" type="button" id="wa-send">Abrir en WhatsApp</button><button class="btn" type="button" id="wa-copy">Copiar mensaje</button></div>
+          <details><summary>Vista previa del mensaje</summary><pre id="wa-preview"></pre></details>
+        </div>
+        <div>
+          <h3><span class="ico" style="background:var(--sky);color:var(--media)">🔔</span>Notificaciones automáticas</h3>
+          <p>Avisos del navegador mientras la aplicación esté abierta y desbloqueada. Se avisa antes de cada tarea con hora, con un resumen diario y con las rutinas que falten por hacer.</p>
+          <label class="switch"><input type="checkbox" id="nt-on"><span>Activar notificaciones</span></label>
+          <div class="row">Avisar <select id="nt-before"><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 hora</option></select> antes de cada tarea con hora</div>
+          <div class="row">Resumen del día a las <input type="time" id="nt-daily" value="08:00"></div>
+          <div class="row">Recordar rutinas pendientes a las <input type="time" id="nt-evening" value="20:00"></div>
+          <div class="row"><button class="btn" type="button" id="nt-test">Probar notificación</button><span class="nt-status" id="nt-status"></span></div>
+        </div>
+      </div>
+      <div class="kpis" id="r-kpis"></div>
+      <div class="rep-filters" id="r-group" style="margin-bottom:8px">
+        <span class="muted" style="align-self:center;font-size:13px">Agrupar:</span>
+        <button class="btn on" data-g="mes">Por mes</button><button class="btn" data-g="prioridad">Por prioridad</button>
+      </div>
+      <div class="rep-filters" id="r-filters">
+        <button class="btn on" data-f="todas">Todas</button>
+        <button class="btn" data-f="pendientes">Pendientes</button>
+        <button class="btn" data-f="completadas">Completadas</button>
+        <button class="btn" data-f="alta">Solo prioridad alta</button>
+      </div>
+      <div id="r-groups"></div>
+    </section>
+    <!-- RENDIMIENTO -->
+    <section class="view" id="view-rendimiento">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em">Rendimiento</h2>
+          <span class="muted">Calificación de tus actividades repetitivas diarias y semanales, últimos 30 días.</span>
+        </div>
+      </div>
+      <div id="perf"></div>
+    </section>
+    <!-- PANEL BI -->
+    <section class="view" id="view-panel">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em">Panel de análisis</h2>
+          <span class="muted">Indicadores, tendencias y proyecciones de todas tus actividades.</span>
+        </div>
+        <div class="ctrl">
+          <select class="btn" id="bi-range"><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="365">Este año</option></select>
+          <button class="btn" id="bi-print">Imprimir / PDF</button>
+        </div>
+      </div>
+      <div id="bi"></div>
+    </section>
+    <!-- PRIVACIDAD -->
+    <section class="view" id="view-privacidad">
+      <div class="topbar">
+        <div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em">Privacidad y seguridad</h2>
+          <span class="muted">Cómo se protegen tus datos y qué controles tienes.</span>
+        </div>
+        <span class="priv-status"><i></i>Cifrado activo · AES-256-GCM</span>
+      </div>
+      <div class="priv-grid">
+        <div class="card">
+          <h3><span class="ico">🔒</span>Dónde viven tus datos</h3>
+          <div class="ok-line"><b>✓</b><span>Todo se guarda <b>solo en este navegador</b>, en este dispositivo. La aplicación no tiene servidor ni envía nada por internet (la única conexión externa es la descarga de la tipografía).</span></div>
+          <div class="ok-line"><b>✓</b><span>Antes de guardarse, la información se <b>cifra con AES-256-GCM</b>. La clave se deriva de tu PIN con PBKDF2 (250.000 iteraciones) y nunca se almacena: existe solo en memoria mientras la app está desbloqueada.</span></div>
+          <div class="ok-line"><b>✓</b><span>Sin el PIN, lo que queda en el navegador es texto ilegible. Ni el asistente que construyó esta app ni nadie que abra las herramientas del navegador puede leerlo.</span></div>
+          <div class="ok-line"><b>!</b><span>Un PIN de 4 dígitos protege frente a miradas casuales; para protección real usa <b>6–8 dígitos</b>. Si lo olvidas, los datos no se pueden recuperar: guarda una copia de seguridad.</span></div>
+        </div>
+        <div class="card">
+          <h3><span class="ico">⏱</span>Bloqueo automático</h3>
+          <p>La app se bloquea sola tras un tiempo sin actividad y al pulsar <b>Bloquear</b> en el menú. Al bloquearse, los datos se borran de la pantalla y de la memoria.</p>
+          <select id="pv-autolock" aria-label="Bloqueo automático">
+            <option value="2">Después de 2 minutos sin actividad</option>
+            <option value="5">Después de 5 minutos sin actividad</option>
+            <option value="10">Después de 10 minutos sin actividad</option>
+            <option value="30">Después de 30 minutos sin actividad</option>
+            <option value="0">Nunca (no recomendado)</option>
+          </select>
+          <h3 style="margin-top:8px"><span class="ico">🔑</span>Cambiar PIN</h3>
+          <input type="password" id="pv-old" inputmode="numeric" maxlength="8" placeholder="PIN actual" autocomplete="off">
+          <input type="password" id="pv-new" inputmode="numeric" maxlength="8" placeholder="Nuevo PIN (4–8 dígitos)" autocomplete="off">
+          <input type="password" id="pv-new2" inputmode="numeric" maxlength="8" placeholder="Repite el nuevo PIN" autocomplete="off">
+          <div class="row"><button class="btn primary" type="button" id="pv-change">Cambiar PIN</button></div>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🚫</span>Filtro de contenido</h3>
+          <p>No se permite guardar tareas, notas, objetivos ni rutinas que contengan términos de estas categorías. El texto se rechaza y se avisa en pantalla.</p>
+          <div class="cats">
+            <span><i></i><span><b>Sustancias ilícitas y controladas</b> · drogas, narcotráfico y jerga asociada.</span></span>
+            <span><i></i><span><b>Bullying y acoso</b> · hostigamiento, amenazas, insultos y humillación.</span></span>
+            <span><i></i><span><b>Actividades indecentes</b> · contenido sexual explícito, prostitución y similares.</span></span>
+          </div>
+          <p>Términos adicionales que quieras bloquear (separados por coma):</p>
+          <textarea id="pv-terms" placeholder="ej. apuesta, casino, …"></textarea>
+          <div class="row"><button class="btn primary" type="button" id="pv-terms-save">Guardar términos</button><span class="muted" style="font-size:12px" id="pv-terms-n"></span></div>
+        </div>
+        <div class="card">
+          <h3><span class="ico">💾</span>Copia de seguridad</h3>
+          <p>La copia se genera <b>cifrada con tu PIN actual</b>: puedes guardarla en cualquier sitio sin exponer su contenido. Para restaurarla necesitarás el PIN con el que se creó.</p>
+          <div class="row"><button class="btn" type="button" id="pv-export">Copiar copia cifrada</button><button class="btn" type="button" id="pv-download">Descargar archivo</button></div>
+          <textarea id="pv-import" placeholder="Pega aquí una copia de seguridad para restaurarla…"></textarea>
+          <div class="row"><input type="password" id="pv-import-pin" inputmode="numeric" maxlength="8" placeholder="PIN de esa copia" autocomplete="off" style="width:160px"><button class="btn" type="button" id="pv-restore">Restaurar</button></div>
+          <h3 style="margin-top:8px"><span class="ico" style="background:#FBE9E7;color:var(--alta)">🗑</span>Borrar todo</h3>
+          <p>Elimina de forma definitiva todos los datos y el PIN de este navegador. Escribe <b>BORRAR</b> para confirmar.</p>
+          <div class="row"><input type="text" id="pv-wipe-txt" placeholder="BORRAR" style="width:140px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-s)"><button class="btn danger" type="button" id="pv-wipe">Borrar todo</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* =========================================================
+   Everyday — una sola fuente de datos alimenta las 3 vistas
+   ========================================================= */
+const KEY='everyday.v1';
+const fmt=(d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parse=(s)=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const monday=(d)=>{const x=new Date(d);const wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);x.setHours(0,0,0,0);return x;};
+const weekKey=(d)=>fmt(monday(d));
+const monthKey=(d)=>fmt(d).slice(0,7);
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const L=(d,o)=>d.toLocaleDateString('es-ES',o);
+
+let cur=new Date(TODAY);      // día seleccionado (vista diaria)
+let curWeek=monday(TODAY);    // lunes de la semana visible
+let curMonth=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+let curYear=TODAY.getFullYear();
+
+/* =========================================================
+   SEGURIDAD — PIN + cifrado local
+   - Los datos se cifran con AES-256-GCM antes de tocar localStorage.
+   - La clave se deriva del PIN con PBKDF2-SHA256 (250.000 iteraciones)
+     y una sal aleatoria; nunca se guarda, vive solo en memoria.
+   - AES-GCM autentica el contenido: un PIN incorrecto simplemente
+     no descifra (no hay hash del PIN almacenado que atacar).
+   ========================================================= */
+const ENC='everyday.v2';        // blob cifrado
+const LEGACY=KEY;               // 'everyday.v1' en texto plano (versiones anteriores)
+const PBKDF2_ITER=250000;
+const te=new TextEncoder(),td=new TextDecoder();
+function b64(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);}
+function unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+let store=emptyStore();          // vacío hasta desbloquear
+let cryptoKey=null,keySalt=null,saveTimer=null,dirty=false,failCount=0,waitUntil=0,idleTimer=null;
+
+function emptyStore(){return ensureShape({});}
+function ensureShape(s){
+  s.tasks=s.tasks||[];s.notes=s.notes||{};s.weekGoals=s.weekGoals||{};s.monthGoals=s.monthGoals||{};
+  s.routines=s.routines||[];s.routineDone=s.routineDone||{};s.banned=s.banned||[];
+  if(typeof s.autoLock!=='number')s.autoLock=10;
+  s.waPhone=s.waPhone||'';
+  s.notif=Object.assign({on:false,before:10,daily:'08:00',evening:'20:00',lastDaily:'',lastEvening:''},s.notif||{});
+  return s;
+}
+async function deriveKey(pin,salt){
+  const base=await crypto.subtle.importKey('raw',te.encode(pin),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:PBKDF2_ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encryptStore(){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,te.encode(JSON.stringify(store)));
+  return JSON.stringify({app:'everyday',v:2,iter:PBKDF2_ITER,salt:b64(keySalt),iv:b64(iv),ct:b64(ct)});
+}
+async function decryptBlob(pin,raw){
+  const blob=JSON.parse(raw);if(!blob||blob.v!==2||!blob.ct)throw new Error('formato');
+  const salt=unb64(blob.salt);const key=await deriveKey(pin,salt);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(blob.iv)},key,unb64(blob.ct));
+  return {key,salt,data:ensureShape(JSON.parse(td.decode(pt)))};
+}
+function save(){dirty=true;clearTimeout(saveTimer);saveTimer=setTimeout(flush,150);}
+async function flush(){
+  if(!cryptoKey||!dirty)return;dirty=false;
+  try{const s=await encryptStore();localStorage.setItem(ENC,s);}catch(e){dirty=true;console.error(e);}
+}
+window.addEventListener('pagehide',()=>{flush();});
+window.addEventListener('visibilitychange',()=>{if(document.hidden)flush();});
+
+/* --- pantalla de bloqueo --- */
+const $=(id)=>document.getElementById(id);
+const validPin=(p)=>/^\d{4,8}$/.test(p);
+function lockMode(){return localStorage.getItem(ENC)?'unlock':'setup';}
+function showLock(){
+  const setup=lockMode()==='setup';
+  $('lk-title').textContent=setup?'Crea un PIN de acceso':'Introduce tu PIN';
+  $('lk-sub').textContent=setup?'Entre 4 y 8 dígitos. Recomendado: 6 o más. Con él se cifrará toda tu información.':'Tus datos están cifrados. Solo con el PIN se pueden leer.';
+  $('lk-pin2').hidden=!setup;$('lk-go').textContent=setup?'Crear PIN y entrar':'Entrar';
+  $('lk-pin').value='';$('lk-pin2').value='';$('lk-err').textContent='';
+  $('lock').hidden=false;$('app').hidden=true;
+  setTimeout(()=>$('lk-pin').focus(),50);
+}
+async function unlock(){
+  const err=$('lk-err'),pin=$('lk-pin').value.trim();
+  if(Date.now()<waitUntil){err.textContent=`Espera ${Math.ceil((waitUntil-Date.now())/1000)} s antes de volver a intentarlo.`;return;}
+  if(!validPin(pin)){err.textContent='El PIN debe tener entre 4 y 8 dígitos.';return;}
+  $('lk-go').disabled=true;err.textContent='';
+  try{
+    if(lockMode()==='setup'){
+      if(pin!==$('lk-pin2').value.trim()){err.textContent='Los dos PIN no coinciden.';return;}
+      keySalt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(pin,keySalt);
+      // migración: datos antiguos guardados en texto plano → cifrados, y se elimina el original
+      let legacy=null;try{legacy=JSON.parse(localStorage.getItem(LEGACY)||'null');}catch(e){}
+      store=ensureShape(legacy||{});
+      dirty=true;await flush();
+      localStorage.removeItem(LEGACY);
+      toast(legacy?'PIN creado · datos anteriores cifrados':'PIN creado');
+    }else{
+      const r=await decryptBlob(pin,localStorage.getItem(ENC));
+      cryptoKey=r.key;keySalt=r.salt;store=r.data;failCount=0;
+    }
+    $('lock').hidden=true;$('app').hidden=false;
+    renderAll();renderPrivacy();syncRemind();resetIdle();showView('hoy');notifTick();
+  }catch(e){
+    failCount++;
+    const wait=failCount>=3?Math.min(60,5*2**(failCount-3)):0;
+    if(wait){waitUntil=Date.now()+wait*1000;}
+    err.textContent='PIN incorrecto.'+(wait?` Espera ${wait} s.`:'');
+    $('lk-pin').value='';$('lk-pin').focus();
+  }finally{$('lk-go').disabled=false;}
+}
+async function lock(){
+  await flush();
+  cryptoKey=null;keySalt=null;store=emptyStore();
+  renderAll();  // limpia la pantalla con el almacén vacío
+  document.querySelectorAll('input[type=password],#pv-import,#pv-terms,#wa-phone').forEach(i=>i.value='');
+  $('wa-preview').textContent='';notified.clear();
+  showLock();
+}
+$('lk-go').addEventListener('click',unlock);
+['lk-pin','lk-pin2'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();unlock();}}));
+$('lock-now').addEventListener('click',e=>{e.stopPropagation();lock();});
+/* bloqueo por inactividad */
+function resetIdle(){clearTimeout(idleTimer);if(!cryptoKey||!store.autoLock)return;idleTimer=setTimeout(()=>{if(cryptoKey){lock();toast('Bloqueado por inactividad');}},store.autoLock*60000);}
+['pointerdown','keydown','scroll','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{if(cryptoKey)resetIdle();},{passive:true}));
+
+/* =========================================================
+   FILTRO DE CONTENIDO — términos no permitidos
+   Coincidencia por palabra completa, sin distinguir mayúsculas
+   ni acentos. Se aplica a tareas, notas, objetivos, metas y rutinas.
+   ========================================================= */
+const BANNED={
+  'sustancias ilícitas o controladas':['cocaina','pichicata','marihuana','mariguana','cannabis','porro','heroina','metanfetamina','anfetamina','anfetaminas','crack','extasis','mdma','lsd','fentanilo','ketamina','opio','narcotico','narcoticos','narco','narcos','narcotrafico','narcotraficante','droga','drogas','drogarse','drogado','drogada','pasta base','pitillo','clefa','estupefaciente','estupefacientes','alucinogeno','alucinogenos','psicotropico','psicotropicos'],
+  'bullying o acoso':['bullying','bulling','bullyng','acoso','acosar','acosador','acosadora','hostigar','hostigamiento','matonear','matoneo','humillar','humillacion','amenazar','intimidar','intimidacion','extorsion','extorsionar','agredir','agresion','golpear','insultar','insulto','insultos','idiota','imbecil','estupido','estupida','tarado','tarada','retrasado','retrasada','mongolo','mongola','puta','puto','maricon','marica','zorra','perra','cabron','cabrona','pendejo','pendeja','mierda','gilipollas','hijo de puta','hija de puta','malparido','malparida','culiao','culeado','basura humana'],
+  'actividades indecentes':['pornografia','porno','pornografico','pornografica','xxx','sexo','sexual','sexuales','desnudo','desnuda','desnudos','desnudas','prostitucion','prostituta','prostituto','puteria','burdel','lenocinio','orgia','orgias','pedofilia','pedofilo','pedofila','violacion','violar','violador','masturbacion','masturbarse','fornicar','pene','vagina','verga','pija','stripper','striptease','onlyfans','escort','trata de personas'],
+};
+const normTxt=(s)=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ');
+const reEsc=(s)=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const wordRe=(w)=>new RegExp('(^|\\s)'+reEsc(normTxt(w).trim())+'(s|es|a|o|as|os)?(?=\\s|$)');
+function findBanned(text){
+  const t=' '+normTxt(text)+' ';
+  for(const [cat,words] of Object.entries(BANNED))for(const w of words)if(wordRe(w).test(t))return {cat,w};
+  for(const w of (store.banned||[]))if(w.trim()&&wordRe(w).test(t))return {cat:'tu lista personal',w};
+  return null;
+}
+function allowed(text){
+  const b=findBanned(text);if(!b)return true;
+  toast(`No permitido: contiene un término de ${b.cat}`,3200);return false;
+}
+
+/* ---------- helpers de datos ---------- */
+const tasksOn=(ds)=>store.tasks.filter(t=>t.date===ds).sort((a,b)=>(a.time||'99')>(b.time||'99')?1:-1);
+const pendingBefore=(ds)=>store.tasks.filter(t=>t.date<ds&&!t.done).sort((a,b)=>a.date>b.date?1:-1);
+function addTask(title,date,time='',prio='media'){if(!allowed(title))return false;store.tasks.push({id:uid(),title,date,time,prio,done:false});save();renderAll();return true;}
+function toggle(id){const t=store.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save();renderAll();toast(t.done?'Completada':'Reabierta');}}
+function remove(id){store.tasks=store.tasks.filter(x=>x.id!==id);save();renderAll();toast('Eliminada');}
+function move(id,ds){const t=store.tasks.find(x=>x.id===id);if(t&&t.date!==ds){t.date=ds;save();renderAll();toast('Movida al '+L(parse(ds),{day:'numeric',month:'short'}));}}
+
+/* ---------- navegación ---------- */
+document.getElementById('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||!b.dataset.view)return;showView(b.dataset.view);
+});
+function showView(v){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
+  window.scrollTo({top:0});
+}
+function renderAll(){renderDay();renderWeek();renderMonth();renderYear();renderReport();renderCounts();if(typeof renderPerf==='function'){renderPerf();renderBI();}}
+function renderCounts(){
+  const t=fmt(TODAY);
+  document.getElementById('n-hoy').textContent=store.tasks.filter(x=>x.date===t&&!x.done).length||'';
+  const wk=weekKey(TODAY),we=fmt(addDays(monday(TODAY),6));
+  document.getElementById('n-semana').textContent=store.tasks.filter(x=>x.date>=wk&&x.date<=we&&!x.done).length||'';
+  const mk=monthKey(TODAY);
+  document.getElementById('n-mes').textContent=store.tasks.filter(x=>x.date.startsWith(mk)&&!x.done).length||'';
+  document.getElementById('n-anio').textContent=store.tasks.filter(x=>x.date.startsWith(String(TODAY.getFullYear()))&&!x.done).length||'';
+}
+
+/* ---------- VISTA DIARIA ---------- */
+const checkSVG='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+function taskRow(t,extra=''){
+  return `<li class="task ${t.done?'done':''}" data-id="${t.id}">
+    <button class="chk ${t.done?'on':''}" data-act="toggle" aria-label="Completar">${checkSVG}</button>
+    <div class="title"><i class="dot ${t.prio}"></i><span>${esc(t.title)}</span></div>
+    <span class="time">${t.time||''}</span>
+    <div style="display:flex;gap:4px;align-items:center">${extra}<button class="del" data-act="del" aria-label="Eliminar">×</button></div>
+  </li>`;
+}
+function renderDay(){
+  const ds=fmt(cur);
+  document.getElementById('d-num').textContent=cur.getDate();
+  document.getElementById('d-dow').textContent=L(cur,{weekday:'long'});
+  document.getElementById('d-my').textContent=L(cur,{month:'long',year:'numeric'});
+  const diff=Math.round((cur-TODAY)/864e5);
+  document.getElementById('d-summary').textContent=diff===0?'Hoy':diff===1?'Mañana':diff===-1?'Ayer':diff>0?`En ${diff} días`:`Hace ${-diff} días`;
+  const list=tasksOn(ds);
+  const done=list.filter(t=>t.done).length;
+  document.getElementById('d-bar').style.width=list.length?`${done/list.length*100}%`:'0';
+  document.getElementById('d-plabel').textContent=list.length?`${done} de ${list.length} tareas completadas`:'Sin tareas todavía';
+  const ul=document.getElementById('d-list');
+  ul.innerHTML=list.length?list.map(t=>taskRow(t)).join(''):`<li class="empty">Nada planificado para este día. Escribe una tarea arriba para empezar.</li>`;
+  const carried=pendingBefore(ds);
+  const box=document.getElementById('d-carried');box.hidden=!carried.length;
+  document.getElementById('d-carried-list').innerHTML=carried.map(t=>taskRow(t,
+    `<span class="from">${L(parse(t.date),{day:'numeric',month:'short'})}</span><button class="move" data-act="move">Traer a este día</button>`)).join('');
+  const ta=document.getElementById('d-notes');ta.value=store.notes[ds]||'';
+  if(typeof renderRoutines==='function')renderRoutines();
+}
+document.getElementById('view-hoy').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=b.closest('.task').dataset.id;
+  if(b.dataset.act==='toggle')toggle(id);
+  if(b.dataset.act==='del')remove(id);
+  if(b.dataset.act==='move')move(id,fmt(cur));
+});
+function submitTask(){
+  const ti=document.getElementById('a-title'),tm=document.getElementById('a-time'),pr=document.getElementById('a-prio');
+  if(!ti.value.trim())return;
+  if(!addTask(ti.value.trim(),fmt(cur),tm.value,pr.value))return;
+  ti.value='';tm.value='';pr.value='media';ti.focus();toast('Tarea agregada');
+}
+document.getElementById('a-add').addEventListener('click',submitTask);
+document.getElementById('a-title').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitTask();}});
+document.getElementById('d-notes').addEventListener('input',e=>{
+  const ds=fmt(cur),v=e.target.value;
+  if(findBanned(v)){
+    let back=store.notes[ds]||'';
+    if(v.startsWith(back))back=back.replace(/\S+$/,'');   // quita también la palabra a medio escribir
+    e.target.value=back;store.notes[ds]=back;save();allowed(v);
+    try{e.target.setSelectionRange(back.length,back.length);}catch(x){}
+    return;
+  }
+  store.notes[ds]=v;save();
+});
+document.getElementById('d-prev').onclick=()=>{cur=addDays(cur,-1);renderDay();};
+document.getElementById('d-next').onclick=()=>{cur=addDays(cur,1);renderDay();};
+document.getElementById('d-today').onclick=()=>{cur=new Date(TODAY);renderDay();};
+
+/* ---------- VISTA SEMANAL ---------- */
+function renderWeek(){
+  const end=addDays(curWeek,6);
+  document.getElementById('w-title').textContent=`${L(curWeek,{day:'numeric',month:'short'})} – ${L(end,{day:'numeric',month:'short',year:'numeric'})}`;
+  const wk=fmt(curWeek),we=fmt(end);
+  const all=store.tasks.filter(t=>t.date>=wk&&t.date<=we);
+  const doneN=all.filter(t=>t.done).length,todayS=fmt(TODAY);
+  document.getElementById('w-sub').textContent=`${doneN} de ${all.length} tareas completadas esta semana`;
+  renderGoals('w-goals',store.weekGoals,wk,'Nuevo objetivo…');
+  // resumen dinámico de la semana (tareas + rutinas)
+  let rExp=0,rOk=0;for(let i=0;i<7;i++){const d=addDays(curWeek,i);if(d>TODAY)continue;store.routines.forEach(r=>{if(dueOn(r,d)){rExp++;if(isDone(r,fmt(d)))rOk++;}});}
+  const altaP=all.filter(t=>t.prio==='alta'&&!t.done).length,late=all.filter(t=>!t.done&&t.date<todayS).length;
+  document.getElementById('w-stats').innerHTML=`
+    <div class="wk-stat"><small>Tareas de la semana</small><b>${all.length}<span>${all.length?Math.round(doneN/all.length*100)+'% hechas':''}</span></b></div>
+    <div class="wk-stat"><small>Rutinas cumplidas</small><b>${rExp?Math.round(rOk/rExp*100)+'%':'–'}<span>${rExp?rOk+'/'+rExp:'sin rutinas'}</span></b></div>
+    <div class="wk-stat ${altaP?'warn':''}"><small>Prioridad alta pendiente</small><b>${altaP}</b></div>
+    <div class="wk-stat ${late?'warn':''}"><small>Vencidas sin completar</small><b>${late}</b></div>`;
+  const wrap=document.getElementById('week');wrap.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=addDays(curWeek,i),ds=fmt(d),list=tasksOn(ds);
+    const dn=list.filter(t=>t.done).length,pend=list.length-dn;
+    const rts=store.routines.filter(r=>dueOn(r,d)),rdn=rts.filter(r=>isDone(r,ds)).length;
+    const tot=list.length+rts.length,tdn=dn+rdn,p=tot?Math.round(tdn/tot*100):0;
+    const lvl=pend===0?'':pend<=2?'':pend<=4?' warn':' alta';
+    const el=document.createElement('div');el.className='day'+(ds===todayS?' today':'')+(ds<todayS?' past':'');el.dataset.date=ds;
+    el.innerHTML=`<div class="day-h" data-open="${ds}" title="Abrir ${L(d,{weekday:'long',day:'numeric',month:'long'})}"><b>${L(d,{weekday:'short'})}</b><span class="num">${d.getDate()}</span></div>
+      <div class="dprog" title="${tdn} de ${tot} completadas"><div class="bar"><i class="${lvl.trim()}" style="width:${p}%"></i></div><span>${tot?tdn+'/'+tot:'libre'}</span></div>
+      <ul>${list.map(t=>`<li class="chip ${t.done?'done':''}${!t.done&&ds<todayS?' late':''}" draggable="true" data-id="${t.id}">
+        <span class="cdot">${checkSVG}</span><i class="dot ${t.prio}"></i><span>${esc(t.title)}</span>${t.time?`<em>${t.time}</em>`:''}
+        <div class="mv"><button data-mv="-1" aria-label="Día anterior">‹</button><button data-mv="1" aria-label="Día siguiente">›</button></div></li>`).join('')}
+      ${rts.length?`<li class="sub">Rutinas</li>`+rts.map(r=>`<li class="chip rt ${isDone(r,ds)?'done':''}" data-rt="${r.id}" title="Rutina · ${r.freq==='diaria'?'todos los días':r.days.map(i=>DN[i]).join(', ')}"><span class="cdot">${checkSVG}</span><span>${esc(r.title)}</span></li>`).join(''):''}</ul>
+      <input class="day-add" data-add="${ds}" placeholder="+ tarea (Enter)">`;
+    wrap.appendChild(el);
+  }
+}
+document.getElementById('week').addEventListener('click',e=>{
+  const mv=e.target.closest('[data-mv]');
+  if(mv){const chip=mv.closest('.chip'),t=store.tasks.find(x=>x.id===chip.dataset.id);move(t.id,fmt(addDays(parse(t.date),+mv.dataset.mv)));return;}
+  if(e.target.closest('[data-add]'))return;
+  const h=e.target.closest('[data-open]');
+  if(h){cur=parse(h.dataset.open);renderDay();showView('hoy');return;}
+  const rt=e.target.closest('.chip.rt');
+  if(rt){const k=rt.dataset.rt+':'+rt.closest('.day').dataset.date;store.routineDone[k]?delete store.routineDone[k]:store.routineDone[k]=true;save();renderAll();toast(store.routineDone[k]?'Rutina cumplida':'Rutina reabierta');return;}
+  const chip=e.target.closest('.chip');
+  if(chip){toggle(chip.dataset.id);}
+});
+document.getElementById('week').addEventListener('keydown',e=>{
+  const inp=e.target.closest('[data-add]');if(!inp||e.key!=='Enter')return;
+  e.preventDefault();const v=inp.value.trim();if(!v)return;
+  if(!addTask(v,inp.dataset.add))return;toast('Tarea agregada');
+  const again=document.querySelector(`[data-add="${inp.dataset.add}"]`);if(again)again.focus();
+});
+let dragId=null;
+document.getElementById('week').addEventListener('dragstart',e=>{const c=e.target.closest('.chip');if(c){dragId=c.dataset.id;e.dataTransfer.effectAllowed='move';}});
+document.getElementById('week').addEventListener('dragover',e=>{const d=e.target.closest('.day');if(d){e.preventDefault();d.classList.add('over');}});
+document.getElementById('week').addEventListener('dragleave',e=>{const d=e.target.closest('.day');if(d)d.classList.remove('over');});
+document.getElementById('week').addEventListener('drop',e=>{const d=e.target.closest('.day');if(d&&dragId){e.preventDefault();move(dragId,d.dataset.date);dragId=null;}});
+document.getElementById('w-prev').onclick=()=>{curWeek=addDays(curWeek,-7);renderWeek();};
+document.getElementById('w-next').onclick=()=>{curWeek=addDays(curWeek,7);renderWeek();};
+document.getElementById('w-today').onclick=()=>{curWeek=monday(TODAY);renderWeek();};
+
+/* ---------- objetivos (semana / mes) ---------- */
+function renderGoals(elId,bucket,key,ph){
+  const list=bucket[key]||[];
+  const el=document.getElementById(elId);
+  el.innerHTML=list.map(g=>`<div class="goal ${g.done?'on':''}" data-id="${g.id}"><span style="cursor:pointer" data-g="toggle">${esc(g.text)}</span><button data-g="del" aria-label="Quitar">×</button></div>`).join('')+
+    `<div class="goal-add"><input placeholder="${ph}" maxlength="60"><button type="button" class="btn" data-g-add>+</button></div>`;
+  el.onclick=e=>{
+    const b=e.target.closest('[data-g]');if(!b)return;
+    const id=b.closest('.goal').dataset.id;const arr=bucket[key]||[];
+    if(b.dataset.g==='toggle'){const g=arr.find(x=>x.id===id);g.done=!g.done;}
+    else bucket[key]=arr.filter(x=>x.id!==id);
+    save();renderGoals(elId,bucket,key,ph);
+  };
+  const inp=el.querySelector('.goal-add input');
+  const addGoal=()=>{const v=inp.value.trim();if(!v||!allowed(v))return;(bucket[key]=bucket[key]||[]).push({id:uid(),text:v,done:false});save();renderGoals(elId,bucket,key,ph);};
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addGoal();}});
+  el.querySelector('[data-g-add]').addEventListener('click',e=>{e.stopPropagation();addGoal();});
+}
+
+/* ---------- VISTA MENSUAL ---------- */
+function renderMonth(){
+  const y=curMonth.getFullYear(),m=curMonth.getMonth();
+  document.getElementById('m-title').textContent=L(curMonth,{month:'long',year:'numeric'});
+  const head=document.getElementById('cal-head');
+  head.innerHTML=[...Array(7)].map((_,i)=>`<div>${L(addDays(monday(TODAY),i),{weekday:'short'})}</div>`).join('');
+  const first=monday(new Date(y,m,1));
+  const cal=document.getElementById('cal');cal.innerHTML='';
+  const mk=monthKey(curMonth);
+  for(let i=0;i<42;i++){
+    const d=addDays(first,i),ds=fmt(d),list=tasksOn(ds);
+    if(i===35&&d.getMonth()!==m)break;
+    const c=document.createElement('div');
+    c.className='cell'+(d.getMonth()!==m?' other':'')+(ds===fmt(TODAY)?' today':'');c.dataset.date=ds;
+    c.innerHTML=`<div class="d">${d.getDate()}</div>`+list.slice(0,3).map(t=>`<div class="mini" style="${t.done?'color:var(--ink-3);text-decoration:line-through':''}"><i class="dot ${t.prio}"></i><span>${esc(t.title)}</span></div>`).join('')+(list.length>3?`<div class="more">+${list.length-3} más</div>`:'');
+    cal.appendChild(c);
+  }
+  renderGoals('m-goals',store.monthGoals,mk,'Nueva meta…');
+  const all=store.tasks.filter(t=>t.date.startsWith(mk));
+  document.getElementById('m-total').textContent=all.length;
+  document.getElementById('m-done').textContent=all.filter(t=>t.done).length;
+  document.getElementById('m-alta').textContent=all.filter(t=>t.prio==='alta'&&!t.done).length;
+}
+document.getElementById('cal').addEventListener('click',e=>{
+  const c=e.target.closest('.cell');if(!c)return;cur=parse(c.dataset.date);renderDay();showView('hoy');
+});
+document.getElementById('m-prev').onclick=()=>{curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()-1,1);renderMonth();};
+document.getElementById('m-next').onclick=()=>{curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+1,1);renderMonth();};
+document.getElementById('m-today').onclick=()=>{curMonth=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);renderMonth();};
+
+/* ---------- VISTA ANUAL ---------- */
+function renderYear(){
+  document.getElementById('y-title').textContent=curYear;
+  const wrap=document.getElementById('year');wrap.innerHTML='';
+  for(let m=0;m<12;m++){
+    const start=new Date(curYear,m,1),days=new Date(curYear,m+1,0).getDate();
+    const pad=(start.getDay()+6)%7;
+    const mk=monthKey(start);
+    const count=store.tasks.filter(t=>t.date.startsWith(mk)).length;
+    let cells='';for(let p=0;p<pad;p++)cells+='<i class="pad"></i>';
+    for(let d=1;d<=days;d++){
+      const ds=`${mk}-${String(d).padStart(2,'0')}`;
+      const n=store.tasks.filter(t=>t.date===ds).length;
+      const cls=(n===0?'':n===1?'a1':n<=3?'a2':'a3')+(ds===fmt(TODAY)?' t':'');
+      cells+=`<i class="${cls}" title="${n} tareas">${d}</i>`;
+    }
+    const el=document.createElement('div');el.className='card ym';el.dataset.m=m;el.tabIndex=0;
+    el.innerHTML=`<h4>${L(start,{month:'long'})}<span>${count?count+' tareas':''}</span></h4><div class="g">${cells}</div>`;
+    wrap.appendChild(el);
+  }
+}
+document.getElementById('year').addEventListener('click',e=>{
+  const c=e.target.closest('.ym');if(!c)return;curMonth=new Date(curYear,+c.dataset.m,1);renderMonth();showView('mes');
+});
+document.getElementById('y-prev').onclick=()=>{curYear--;renderYear();};
+document.getElementById('y-next').onclick=()=>{curYear++;renderYear();};
+document.getElementById('y-today').onclick=()=>{curYear=TODAY.getFullYear();renderYear();};
+
+/* ---------- REPORTES ---------- */
+let repYear=TODAY.getFullYear(),repFilter='todas',repGroup='mes',repOpen=new Set([monthKey(TODAY),'alta']);
+function renderReport(){
+  document.getElementById('r-title').textContent='Reporte '+repYear;
+  if(cryptoKey&&typeof waPreview==='function')waPreview();
+  const yr=String(repYear);
+  let all=store.tasks.filter(t=>t.date.startsWith(yr));
+  const total=all.length,done=all.filter(t=>t.done).length,alta=all.filter(t=>t.prio==='alta'&&!t.done).length;
+  const overdue=all.filter(t=>!t.done&&t.date<fmt(TODAY)).length;
+  document.getElementById('r-kpis').innerHTML=[
+    ['Tareas del año',total],['Completadas',total?`${done} <span style="font-size:14px;color:var(--ink-2)">(${Math.round(done/total*100)}%)</span>`:0],
+    ['Prioridad alta pendiente',alta],['Vencidas sin completar',overdue]
+  ].map(([l,v])=>`<div class="card kpi"><small>${l}</small><b>${v}</b></div>`).join('');
+  if(repFilter==='pendientes')all=all.filter(t=>!t.done);
+  if(repFilter==='completadas')all=all.filter(t=>t.done);
+  if(repFilter==='alta')all=all.filter(t=>t.prio==='alta');
+  const wrap=document.getElementById('r-groups');wrap.innerHTML='';
+  let any=false;
+  if(repGroup==='prioridad'){
+    const PL={alta:'Prioridad alta',media:'Prioridad media',baja:'Prioridad baja'};
+    ['alta','media','baja'].forEach(p=>{
+      const list=all.filter(t=>t.prio===p).sort((a,b)=>a.date>b.date?1:-1);if(!list.length)return;any=true;
+      const d=list.filter(t=>t.done).length,venc=list.filter(t=>!t.done&&t.date<fmt(TODAY)).length;
+      const byM={};list.forEach(t=>(byM[t.date.slice(0,7)]=byM[t.date.slice(0,7)]||[]).push(t));
+      const g=document.createElement('div');g.className='card rep-group'+(repOpen.has(p)?' open':'');g.dataset.mk=p;
+      g.innerHTML=`<div class="rep-h" style="border-left:4px solid var(--${p})"><div><h3><i class="dot ${p}"></i> ${PL[p]}</h3><div class="bar"><i style="width:${d/list.length*100}%"></i></div></div>
+        <div class="meta"><b>${d}</b> / ${list.length} completadas (${Math.round(d/list.length*100)}%)<br>${venc} vencidas · ${list.length-d-venc} pendientes</div></div>
+        <div class="rep-body">${Object.keys(byM).sort().map(mk=>`<div class="rep-sub">${L(parse(mk+'-01'),{month:'long'})} (${byM[mk].filter(t=>t.done).length}/${byM[mk].length})</div>`+
+          byM[mk].map(t=>`<div class="rep-row ${t.done?'done':''}"><span class="dt">${L(parse(t.date),{day:'2-digit',month:'short'})}${t.time?' '+t.time:''}</span><span class="t">${esc(t.title)}</span><span class="tag ${t.done?'ok':'pend'}">${t.done?'Completada':(t.date<fmt(TODAY)?'Vencida':'Pendiente')}</span></div>`).join('')).join('')}</div>`;
+      wrap.appendChild(g);
+    });
+    if(!any)wrap.innerHTML=`<div class="card empty">No hay tareas registradas en ${repYear} con este filtro.</div>`;
+    return;
+  }
+  for(let m=0;m<12;m++){
+    const mk=`${yr}-${String(m+1).padStart(2,'0')}`;
+    const list=all.filter(t=>t.date.startsWith(mk)).sort((a,b)=>a.date>b.date?1:a.date<b.date?-1:0);
+    if(!list.length)continue;any=true;
+    const d=list.filter(t=>t.done).length;
+    const byP={alta:[],media:[],baja:[]};list.forEach(t=>byP[t.prio].push(t));
+    const g=document.createElement('div');g.className='card rep-group'+(repOpen.has(mk)?' open':'');g.dataset.mk=mk;
+    g.innerHTML=`<div class="rep-h"><div><h3>${L(new Date(repYear,m,1),{month:'long'})}</h3><div class="bar"><i style="width:${list.length?d/list.length*100:0}%"></i></div></div>
+      <div class="meta"><b>${d}</b> / ${list.length} completadas<br>${byP.alta.length} alta · ${byP.media.length} media · ${byP.baja.length} baja</div></div>
+      <div class="rep-body">${['alta','media','baja'].map(p=>byP[p].length?`<div class="rep-sub"><i class="dot ${p}"></i>Prioridad ${p} (${byP[p].length})</div>`+
+        byP[p].map(t=>`<div class="rep-row ${t.done?'done':''}"><span class="dt">${L(parse(t.date),{day:'2-digit',month:'short'})}${t.time?' '+t.time:''}</span><span class="t">${esc(t.title)}</span><span class="tag ${t.done?'ok':'pend'}">${t.done?'Completada':(t.date<fmt(TODAY)?'Vencida':'Pendiente')}</span></div>`).join(''):'').join('')}</div>`;
+    wrap.appendChild(g);
+  }
+  if(!any)wrap.innerHTML=`<div class="card empty">No hay tareas registradas en ${repYear} con este filtro.</div>`;
+}
+document.getElementById('r-groups').addEventListener('click',e=>{
+  const h=e.target.closest('.rep-h');if(!h)return;const g=h.parentElement,mk=g.dataset.mk;
+  repOpen.has(mk)?repOpen.delete(mk):repOpen.add(mk);g.classList.toggle('open');
+});
+document.getElementById('r-group').addEventListener('click',e=>{
+  const b=e.target.closest('[data-g]');if(!b)return;repGroup=b.dataset.g;
+  document.querySelectorAll('#r-group .btn').forEach(x=>x.classList.toggle('on',x===b));renderReport();
+});
+document.getElementById('r-filters').addEventListener('click',e=>{
+  const b=e.target.closest('[data-f]');if(!b)return;repFilter=b.dataset.f;
+  document.querySelectorAll('#r-filters .btn').forEach(x=>x.classList.toggle('on',x===b));renderReport();
+});
+document.getElementById('r-prev').onclick=()=>{repYear--;renderReport();};
+document.getElementById('r-next').onclick=()=>{repYear++;renderReport();};
+document.getElementById('r-today').onclick=()=>{repYear=TODAY.getFullYear();renderReport();};
+document.getElementById('r-print').onclick=()=>{repOpen=new Set(document.querySelectorAll('.rep-group')).size?new Set([...document.querySelectorAll('.rep-group')].map(g=>g.dataset.mk)):repOpen;renderReport();showView('reportes');setTimeout(()=>window.print(),100);};
+
+/* ---------- RECORDATORIOS: WhatsApp ---------- */
+const PRI={alta:'ALTA',media:'media',baja:'baja'};
+const dayLabel=(d)=>L(d,{weekday:'long',day:'numeric',month:'long'});
+function waMessage(scope){
+  const now=new Date();now.setHours(0,0,0,0);const t=fmt(now);
+  const line=(x)=>`• ${x.time?x.time+' · ':''}${x.title}${x.prio==='alta'?' [ALTA]':''}`;
+  const L_=[];
+  if(scope==='hoy'||scope==='manana'){
+    const d=scope==='hoy'?now:addDays(now,1),ds=fmt(d);
+    const list=tasksOn(ds).filter(x=>!x.done),rts=store.routines.filter(r=>dueOn(r,d)&&!isDone(r,ds));
+    L_.push(`*Everyday · Recordatorio ${scope==='hoy'?'de hoy':'para mañana'}*`,dayLabel(d),'');
+    L_.push(list.length?`Pendientes (${list.length}):`:'Sin tareas pendientes.');list.forEach(x=>L_.push(line(x)));
+    if(rts.length){L_.push('','Rutinas por hacer:');rts.forEach(r=>L_.push(`• ${r.title}`));}
+    if(scope==='hoy'){const late=pendingBefore(t);if(late.length){L_.push('',`Vencidas de días anteriores (${late.length}):`);late.slice(0,8).forEach(x=>L_.push(`• ${L(parse(x.date),{day:'numeric',month:'short'})} · ${x.title}${x.prio==='alta'?' [ALTA]':''}`));if(late.length>8)L_.push(`… y ${late.length-8} más`);}}
+  }else if(scope==='semana'){
+    const ws=monday(now);
+    L_.push('*Everyday · Plan de la semana*',`${L(ws,{day:'numeric',month:'short'})} – ${L(addDays(ws,6),{day:'numeric',month:'short'})}`,'');
+    const goals=(store.weekGoals[fmt(ws)]||[]).filter(g=>!g.done);
+    if(goals.length){L_.push('Objetivos:');goals.forEach(g=>L_.push(`• ${g.text}`));L_.push('');}
+    let any=false;
+    for(let i=0;i<7;i++){const d=addDays(ws,i),list=tasksOn(fmt(d)).filter(x=>!x.done);if(!list.length)continue;any=true;L_.push(`${L(d,{weekday:'long',day:'numeric'})}:`);list.forEach(x=>L_.push(line(x)));L_.push('');}
+    if(!any)L_.push('Sin tareas pendientes esta semana.');
+  }else{
+    const late=pendingBefore(t),alta=store.tasks.filter(x=>x.prio==='alta'&&!x.done&&x.date>=t).sort((a,b)=>a.date>b.date?1:-1);
+    L_.push('*Everyday · Urgente*',dayLabel(now),'');
+    L_.push(late.length?`Vencidas sin completar (${late.length}):`:'Sin tareas vencidas.');late.forEach(x=>L_.push(`• ${L(parse(x.date),{day:'numeric',month:'short'})} · ${x.title}${x.prio==='alta'?' [ALTA]':''}`));
+    L_.push('',alta.length?`Prioridad alta próxima (${alta.length}):`:'Sin prioridad alta pendiente.');alta.forEach(x=>L_.push(`• ${L(parse(x.date),{day:'numeric',month:'short'})}${x.time?' '+x.time:''} · ${x.title}`));
+  }
+  return L_.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function waPreview(){$('wa-preview').textContent=waMessage($('wa-scope').value);}
+$('wa-scope').onchange=waPreview;
+$('wa-phone').oninput=e=>{store.waPhone=e.target.value.replace(/[^\d]/g,'');save();};
+$('wa-send').onclick=async()=>{
+  const msg=waMessage($('wa-scope').value),phone=(store.waPhone||'').replace(/[^\d]/g,'');
+  const url=`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  try{await navigator.clipboard.writeText(msg);}catch(e){}
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+  toast('Abriendo WhatsApp · mensaje también copiado',2600);
+};
+$('wa-copy').onclick=async()=>{const msg=waMessage($('wa-scope').value);try{await navigator.clipboard.writeText(msg);toast('Mensaje copiado');}catch(e){$('wa-preview').textContent=msg;$('wa-preview').parentElement.open=true;toast('Copia el texto de la vista previa',2600);}};
+
+/* ---------- RECORDATORIOS: notificaciones automáticas ---------- */
+const notified=new Set();   // avisos ya emitidos en esta sesión
+const hasNotif=()=>('Notification' in window);
+function notify(title,body){
+  if(!hasNotif()||Notification.permission!=='granted')return false;
+  try{const n=new Notification(title,{body,tag:'everyday-'+Date.now(),silent:false});n.onclick=()=>{window.focus();n.close();};return true;}catch(e){return false;}
+}
+function notifStatus(){
+  const el=$('nt-status');if(!el)return;
+  if(!hasNotif()){el.textContent='No disponible en este navegador o entorno';el.className='nt-status off';return;}
+  const p=Notification.permission;
+  if(!store.notif.on){el.textContent='Desactivadas';el.className='nt-status';}
+  else if(p==='granted'){el.textContent='Activas · el navegador tiene permiso';el.className='nt-status on';}
+  else if(p==='denied'){el.textContent='Bloqueadas por el navegador: habilítalas en la configuración del sitio';el.className='nt-status off';}
+  else{el.textContent='Pendiente de permiso';el.className='nt-status off';}
+}
+function syncRemind(){
+  $('wa-phone').value=store.waPhone||'';waPreview();
+  $('nt-on').checked=!!store.notif.on;$('nt-before').value=String(store.notif.before);
+  $('nt-daily').value=store.notif.daily;$('nt-evening').value=store.notif.evening;notifStatus();
+}
+$('nt-on').onchange=async e=>{
+  if(e.target.checked){
+    if(!hasNotif()){toast('Este navegador no permite notificaciones',2600);e.target.checked=false;return;}
+    let p=Notification.permission;
+    if(p==='default'){try{p=await Notification.requestPermission();}catch(x){p='denied';}}
+    if(p!=='granted'){toast('El navegador no concedió el permiso',2800);e.target.checked=false;store.notif.on=false;save();notifStatus();return;}
+    store.notif.on=true;save();notifStatus();toast('Notificaciones activadas');notify('Everyday','Las notificaciones están activas. Te avisaré de tus tareas con hora, el resumen diario y las rutinas pendientes.');
+  }else{store.notif.on=false;save();notifStatus();toast('Notificaciones desactivadas');}
+};
+$('nt-before').onchange=e=>{store.notif.before=+e.target.value;save();};
+$('nt-daily').onchange=e=>{store.notif.daily=e.target.value||'08:00';save();};
+$('nt-evening').onchange=e=>{store.notif.evening=e.target.value||'20:00';save();};
+$('nt-test').onclick=async()=>{
+  if(!hasNotif()){toast('No disponible en este navegador o entorno',2600);return;}
+  let p=Notification.permission;if(p==='default'){try{p=await Notification.requestPermission();}catch(x){}}
+  notifStatus();
+  if(p!=='granted'){toast('Sin permiso del navegador para notificar',2600);return;}
+  const n=tasksOn(fmt(new Date())).filter(x=>!x.done).length;
+  notify('Everyday · prueba',n?`Tienes ${n} tarea(s) pendiente(s) hoy.`:'Todo al día. Así se verán tus recordatorios.');
+};
+function notifTick(){
+  if(!cryptoKey||!store.notif||!store.notif.on||!hasNotif()||Notification.permission!=='granted')return;
+  const now=new Date(),ds=fmt(now),hm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const before=+store.notif.before||10;
+  // aviso previo a tareas con hora
+  store.tasks.filter(t=>t.date===ds&&t.time&&!t.done).forEach(t=>{
+    const [h,m]=t.time.split(':').map(Number);const at=new Date(now);at.setHours(h,m-before,0,0);
+    const diff=now-at,key='t:'+t.id+':'+ds;
+    if(diff>=0&&diff<90000&&!notified.has(key)){notified.add(key);notify(`En ${before} min · ${t.title}`,`${t.time} · prioridad ${t.prio}`);}
+  });
+  // resumen diario (una vez al día, a partir de la hora configurada)
+  if(hm>=store.notif.daily&&store.notif.lastDaily!==ds){
+    store.notif.lastDaily=ds;save();
+    const list=tasksOn(ds).filter(x=>!x.done),late=pendingBefore(ds).length,alta=list.filter(x=>x.prio==='alta').length;
+    notify('Everyday · resumen de hoy',list.length||late?`${list.length} pendiente(s) hoy${alta?` (${alta} de prioridad alta)`:''}${late?` · ${late} vencida(s) de días anteriores`:''}.`:'Sin tareas pendientes para hoy.');
+  }
+  // rutinas pendientes por la tarde/noche
+  if(hm>=store.notif.evening&&store.notif.lastEvening!==ds){
+    store.notif.lastEvening=ds;save();
+    const rts=store.routines.filter(r=>dueOn(r,now)&&!isDone(r,ds));
+    if(rts.length)notify('Everyday · rutinas pendientes',rts.map(r=>r.title).join(' · '));
+  }
+}
+setInterval(notifTick,30000);
+
+/* ---------- RUTINAS ---------- */
+const wd=(d)=>(d.getDay()+6)%7; // 0=lunes
+const DN=['lun','mar','mié','jue','vie','sáb','dom'];
+const dueOn=(r,d)=>fmt(d)>=r.created&&r.days.includes(wd(d));
+const isDone=(r,ds)=>!!store.routineDone[r.id+':'+ds];
+function renderRoutines(){
+  const ds=fmt(cur);const list=store.routines.filter(r=>dueOn(r,cur));
+  const el=document.getElementById('rt-list');
+  el.innerHTML=list.length?list.map(r=>`<div class="rt ${isDone(r,ds)?'done':''}" data-id="${r.id}">
+    <button class="chk ${isDone(r,ds)?'on':''}" data-rt="toggle" aria-label="Completar">${checkSVG}</button>
+    <div><div class="title">${esc(r.title)}</div><div class="freq">${r.freq==='diaria'?'Todos los días':r.days.map(i=>DN[i]).join(', ')}</div></div>
+    <button class="del" data-rt="del" aria-label="Eliminar rutina">×</button></div>`).join('')
+  :`<div class="empty">No hay actividades repetitivas para este día. Crea una con "+ Nueva rutina".</div>`;
+}
+document.getElementById('rt-list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-rt]');if(!b)return;const id=b.closest('.rt').dataset.id;
+  if(b.dataset.rt==='toggle'){const k=id+':'+fmt(cur);store.routineDone[k]?delete store.routineDone[k]:store.routineDone[k]=true;save();renderAll();}
+  if(b.dataset.rt==='del'){store.routines=store.routines.filter(r=>r.id!==id);save();renderAll();toast('Rutina eliminada');}
+});
+document.getElementById('rt-days').innerHTML=DN.map((n,i)=>`<label><input type="checkbox" value="${i}"><span>${n}</span></label>`).join('');
+document.getElementById('rt-toggle').onclick=()=>{const f=document.getElementById('rt-form');f.hidden=!f.hidden;if(!f.hidden)document.getElementById('rt-title').focus();};
+document.getElementById('rt-cancel').onclick=()=>{document.getElementById('rt-form').hidden=true;};
+document.getElementById('rt-freq').onchange=e=>{document.getElementById('rt-days').hidden=e.target.value!=='semanal';};
+document.getElementById('rt-save').onclick=()=>{
+  const title=document.getElementById('rt-title').value.trim();if(!title){toast('Escribe un nombre');return;}
+  if(!allowed(title))return;
+  const freq=document.getElementById('rt-freq').value;
+  let days=freq==='diaria'?[0,1,2,3,4,5,6]:[...document.querySelectorAll('#rt-days input:checked')].map(i=>+i.value);
+  if(!days.length){toast('Elige al menos un día');return;}
+  store.routines.push({id:uid(),title,freq,days,created:fmt(TODAY)});save();
+  document.getElementById('rt-title').value='';document.getElementById('rt-form').hidden=true;
+  document.querySelectorAll('#rt-days input').forEach(i=>i.checked=false);
+  renderAll();toast('Rutina creada');
+};
+
+/* ---------- DASHBOARD DE RENDIMIENTO (dinámico) ---------- */
+const grade=(p)=>p>=90?['A','Excelente']:p>=75?['B','Bueno']:p>=60?['C','Regular']:p>=40?['D','Bajo']:['E','Crítico'];
+const RC=['#0B2545','#1F5FBF','#3E86D9','#6FA6E6','#1A8A7A','#D68A1E','#8E5BC9','#C0392B'];
+let perfDays=30,perfHidden=new Set(),perfMode='semana';
+function statsFor(r,from,to){let exp=0,ok=0;for(let d=new Date(from);d<=to;d=addDays(d,1)){if(dueOn(r,d)){exp++;if(isDone(r,fmt(d)))ok++;}}return {exp,ok,pct:exp?Math.round(ok/exp*100):null};}
+function streak(r){let n=0;for(let d=new Date(TODAY);;d=addDays(d,-1)){if(fmt(d)<r.created)break;if(!dueOn(r,d))continue;if(isDone(r,fmt(d)))n++;else{ if(fmt(d)===fmt(TODAY))continue;break;}}return n;}
+function tipOn(e,html){const t=document.getElementById('tip');t.innerHTML=html;t.classList.add('show');t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-10)+'px';}
+function tipOff(){document.getElementById('tip').classList.remove('show');}
+function renderPerf(){
+  const el=document.getElementById('perf');
+  if(!store.routines.length){el.innerHTML='<div class="card empty">Aún no tienes actividades repetitivas. Créalas desde la vista Hoy para empezar a medir tu rendimiento.</div>';return;}
+  const from=addDays(TODAY,-(perfDays-1));
+  const rows=store.routines.map((r,i)=>({r,c:RC[i%RC.length],s:statsFor(r,from,TODAY),st:streak(r)}));
+  const vis=rows.filter(x=>!perfHidden.has(x.r.id));
+  const texp=vis.reduce((a,x)=>a+x.s.exp,0),tok=vis.reduce((a,x)=>a+x.s.ok,0);
+  const gp=texp?Math.round(tok/texp*100):0,[gl,gt]=grade(gp);
+  const best=vis.slice().sort((a,b)=>(b.s.pct||0)-(a.s.pct||0))[0],worst=vis.slice().sort((a,b)=>(a.s.pct||0)-(b.s.pct||0))[0];
+  // buckets (semana o día) para la serie temporal
+  const buckets=[];
+  if(perfMode==='semana'){const n=Math.max(2,Math.ceil(perfDays/7));for(let k=n-1;k>=0;k--){const ws=addDays(monday(TODAY),-7*k);buckets.push({from:ws,to:addDays(ws,6)<TODAY?addDays(ws,6):TODAY,l:L(ws,{day:'numeric',month:'short'})});}}
+  else{for(let k=Math.min(perfDays,30)-1;k>=0;k--){const d=addDays(TODAY,-k);buckets.push({from:d,to:d,l:L(d,{day:'numeric'})});}}
+  const W=560,H=190,Lm=34,B=26,T=12,R=10,n=buckets.length,sx=i=>Lm+i*(W-Lm-R)/Math.max(n-1,1),sy=v=>T+(H-T-B)*(1-v/100);
+  let g='';[0,25,50,75,100].forEach(v=>g+=`<line x1="${Lm}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="${C.soft}"/><text x="${Lm-6}" y="${sy(v)+3}" font-size="9" text-anchor="end" fill="#7189AD">${v}%</text>`);
+  buckets.forEach((b,i)=>{if(n<=14||i%Math.ceil(n/12)===0)g+=`<text x="${sx(i)}" y="${H-8}" font-size="9" text-anchor="middle" fill="#7189AD">${b.l}</text>`;});
+  // serie global
+  const gl_pts=buckets.map(b=>{let e=0,o=0;vis.forEach(x=>{const s=statsFor(x.r,b.from,b.to);e+=s.exp;o+=s.ok;});return e?Math.round(o/e*100):null;});
+  const pathOf=(pts,c,w,dash='')=>{let d='',open=true;pts.forEach((v,i)=>{if(v===null){open=true;return;}d+=(open?'M':'L')+sx(i)+','+sy(v);open=false;});return `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-dasharray="${dash}"/>`;};
+  vis.forEach(x=>{const pts=buckets.map(b=>statsFor(x.r,b.from,b.to).pct);g+=pathOf(pts,x.c,1.8);
+    pts.forEach((v,i)=>{if(v!==null)g+=`<circle class="hv" cx="${sx(i)}" cy="${sy(v)}" r="4" fill="${x.c}" data-t="${esc(x.r.title)} · ${buckets[i].l}: ${v}%"/>`;});});
+  g+=pathOf(gl_pts,C.ink,3,'6 4');
+  gl_pts.forEach((v,i)=>{if(v!==null)g+=`<circle class="hv" cx="${sx(i)}" cy="${sy(v)}" r="4.5" fill="#fff" stroke="${C.ink}" stroke-width="2" data-t="Global · ${buckets[i].l}: ${v}%"/>`;});
+  const trend=`<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+  // barras de ranking (clic para aislar)
+  const rank=rows.slice().sort((a,b)=>(b.s.pct||0)-(a.s.pct||0));
+  const bars=`<svg viewBox="0 0 520 ${rank.length*34+4}">${rank.map((x,i)=>{const y=i*34,w=x.s.pct?x.s.pct/100*300:2,off=perfHidden.has(x.r.id);return `<g class="hv bar" data-id="${x.r.id}" opacity="${off?.35:1}"><text x="0" y="${y+20}" font-size="12" font-weight="600" fill="${C.ink}">${esc(x.r.title.slice(0,20))}</text><rect x="150" y="${y+8}" width="300" height="16" rx="4" fill="${C.soft}"/><rect x="150" y="${y+8}" width="${w}" height="16" rx="4" fill="${x.c}"/><text x="458" y="${y+20}" font-size="12" font-weight="700" fill="${C.ink}">${x.s.pct===null?'–':x.s.pct+'%'}</text><text x="${498}" y="${y+20}" font-size="11" fill="#34507A">${grade(x.s.pct||0)[0]}</text></g>`;}).join('')}</svg>`;
+  // cumplimiento por día de semana (rutinas visibles)
+  const byD=DN.map((nm,i)=>{let e=0,o=0;vis.forEach(x=>{for(let d=new Date(from);d<=TODAY;d=addDays(d,1))if(wd(d)===i&&dueOn(x.r,d)){e++;if(isDone(x.r,fmt(d)))o++;}});return {nm,p:e?Math.round(o/e*100):0,e,o};});
+  const wdChart=`<svg viewBox="0 0 520 150">${byD.map((d,i)=>{const h=d.p/100*100,x=20+i*72;return `<g class="hv bar" data-t="${d.nm}: ${d.p}% (${d.o}/${d.e})"><rect x="${x}" y="${115-h}" width="44" height="${h||2}" rx="4" fill="${d.p>=75?C.ink:d.p>=50?C.media:d.p>0?'#6FA6E6':C.soft}"/><text x="${x+22}" y="${108-h}" font-size="11" font-weight="700" text-anchor="middle" fill="${C.ink}">${d.e?d.p+'%':''}</text><text x="${x+22}" y="138" font-size="11" text-anchor="middle" fill="#34507A">${d.nm}</text></g>`;}).join('')}</svg>`;
+  el.innerHTML=`
+  <div class="perf-tools">
+    <div class="seg" id="perf-range">${[7,30,90].map(d=>`<button class="${perfDays===d?'on':''}" data-d="${d}">${d} días</button>`).join('')}</div>
+    <div class="seg" id="perf-mode"><button class="${perfMode==='semana'?'on':''}" data-m="semana">Por semana</button><button class="${perfMode==='dia'?'on':''}" data-m="dia">Por día</button></div>
+    <div class="rchips" id="perf-chips">${rows.map(x=>`<button class="rchip ${perfHidden.has(x.r.id)?'off':'on'}" data-id="${x.r.id}"><i style="background:${x.c}"></i>${esc(x.r.title)}</button>`).join('')}</div>
+  </div>
+  <div class="card perf-hero"><div><span class="grade g${gl}" style="width:72px;height:72px;font-size:36px;border-radius:18px">${gl}</span></div>
+    <div><div class="big">${gp}<small>% de cumplimiento</small></div><p><b>${gt}.</b> ${tok} de ${texp} actividades cumplidas en los últimos ${perfDays} días.${vis.length>1?` Mejor: <b>${esc(best.r.title)}</b> (${best.s.pct??'–'}%). A mejorar: <b>${esc(worst.r.title)}</b> (${worst.s.pct??'–'}%).`:''}</p></div></div>
+  <div class="perf-two">
+    <div class="card chart"><h4>Evolución del cumplimiento</h4><p>Pasa el cursor por los puntos para ver el detalle. La línea punteada es el global de las rutinas seleccionadas.</p>${trend}</div>
+    <div class="card chart"><h4>Ranking de rutinas</h4><p>Haz clic en una barra para mostrarla u ocultarla en los gráficos.</p>${bars}</div>
+  </div>
+  <div class="perf-two" style="grid-template-columns:1fr 1fr">
+    <div class="card chart"><h4>Cumplimiento por día de la semana</h4><p>Identifica los días donde más fallas.</p>${wdChart}</div>
+    <div class="card chart"><h4>Resumen por rutina</h4><p>Últimos ${perfDays} días.</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rutina</th><th>Frecuencia</th><th class="num">Hechas</th><th class="num">%</th><th class="num">Racha</th><th>Nota</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td><i class="dot" style="background:${x.c}"></i> ${esc(x.r.title)}</td><td class="muted">${x.r.freq==='diaria'?'Diaria':x.r.days.map(i=>DN[i]).join(', ')}</td><td class="num">${x.s.ok}/${x.s.exp}</td><td class="num"><b>${x.s.pct??'–'}</b></td><td class="num">${x.st}</td><td><span class="grade g${grade(x.s.pct||0)[0]}" style="width:26px;height:26px;font-size:13px;border-radius:7px">${x.s.pct===null?'–':grade(x.s.pct)[0]}</span></td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+  <div class="perf-grid">${rows.map(({r,s,st,c})=>{
+    const [l,t]=s.pct===null?['–','Sin datos']:grade(s.pct);
+    let hist='',first='',last='';for(let k=13;k>=0;k--){const d=addDays(TODAY,-k),ds=fmt(d);if(k===13)first=L(d,{day:'numeric',month:'short'});if(k===0)last='hoy';
+      hist+=dueOn(r,d)?`<i class="${isDone(r,ds)?'ok':'miss'}" title="${ds}"></i>`:`<i class="na" title="${ds}: no programada"></i>`;}
+    return `<div class="card perf-card" style="border-top:3px solid ${c}"><div class="perf-top"><h4>${esc(r.title)}<span class="freq">${r.freq==='diaria'?'Diaria · todos los días':'Semanal · '+r.days.map(i=>DN[i]).join(', ')}</span></h4><span class="grade ${s.pct!==null?'g'+l:''}" style="${s.pct===null?'background:var(--line)':''}">${l}</span></div>
+      <div class="perf-stats"><span><b>${s.pct===null?'–':s.pct+'%'}</b>cumplimiento</span><span><b>${s.ok}/${s.exp}</b>realizadas</span><span><b>${st}</b>racha actual</span><span><b>${t}</b>calificación</span></div>
+      <div class="hist">${hist}</div><div class="hist-l"><span>${first}</span><span>${last}</span></div></div>`;}).join('')}</div>`;
+  el.querySelector('#perf-range').onclick=e=>{const b=e.target.closest('[data-d]');if(b){perfDays=+b.dataset.d;renderPerf();}};
+  el.querySelector('#perf-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(b){perfMode=b.dataset.m;renderPerf();}};
+  const tog=id=>{perfHidden.has(id)?perfHidden.delete(id):perfHidden.add(id);renderPerf();};
+  el.querySelector('#perf-chips').onclick=e=>{const b=e.target.closest('[data-id]');if(b)tog(b.dataset.id);};
+  el.querySelectorAll('.hv[data-id]').forEach(x=>x.addEventListener('click',()=>tog(x.dataset.id)));
+  el.querySelectorAll('.hv[data-t]').forEach(x=>{x.addEventListener('mousemove',e=>tipOn(e,x.dataset.t));x.addEventListener('mouseleave',tipOff);});
+}
+
+/* ---------- PANEL BI ---------- */
+let biRange=30,biSort='date',biDir=1,biQ='',biType='todas',biState='todas';
+const C={alta:'#C0392B',media:'#1F5FBF',baja:'#7FA1CC',ok:'#1A8A7A',ink:'#0B2545',line:'#C7D5E6',soft:'#E2EAF3',rt:'#3E86D9',warn:'#D68A1E'};
+function pct(a,b){return b?Math.round(a/b*100):0;}
+function biFrom(){return biRange===365?new Date(TODAY.getFullYear(),0,1):addDays(TODAY,-(biRange-1));}
+function allActivities(from,to){ // unifica tareas + ocurrencias de rutinas
+  const f=fmt(from),t=fmt(to),out=[];
+  store.tasks.forEach(x=>{if(x.date>=f&&x.date<=t)out.push({type:'Tarea',title:x.title,date:x.date,prio:x.prio,done:x.done,id:x.id});});
+  store.routines.forEach(r=>{for(let d=new Date(from);d<=to;d=addDays(d,1))if(dueOn(r,d))out.push({type:'Rutina',title:r.title,date:fmt(d),prio:r.freq,done:isDone(r,fmt(d)),id:r.id});});
+  return out;
+}
+function donut(parts,total,label){ // parts:[{v,c}]
+  let a=-Math.PI/2,paths='';const R=44,r=30,cx=60,cy=60;
+  parts.forEach(p=>{if(!p.v)return;const ang=p.v/total*2*Math.PI,a2=a+ang-0.0001;const x1=cx+R*Math.cos(a),y1=cy+R*Math.sin(a),x2=cx+R*Math.cos(a2),y2=cy+R*Math.sin(a2),x3=cx+r*Math.cos(a2),y3=cy+r*Math.sin(a2),x4=cx+r*Math.cos(a),y4=cy+r*Math.sin(a),lg=ang>Math.PI?1:0;
+    paths+=`<path d="M${x1} ${y1}A${R} ${R} 0 ${lg} 1 ${x2} ${y2}L${x3} ${y3}A${r} ${r} 0 ${lg} 0 ${x4} ${y4}Z" fill="${p.c}"/>`;a+=ang;});
+  if(!total)paths=`<circle cx="60" cy="60" r="37" fill="none" stroke="${C.soft}" stroke-width="14"/>`;
+  return `<svg viewBox="0 0 120 120" style="max-width:190px;margin:0 auto">${paths}<text x="60" y="57" text-anchor="middle" font-size="20" font-weight="800" fill="${C.ink}">${label}</text><text x="60" y="72" text-anchor="middle" font-size="9" fill="#7189AD">${total} actividades</text></svg>`;
+}
+function lineChart(series,labels){ // series:[{pts:[],c,name}] pts en 0..100
+  const W=520,H=170,L=34,B=24,T=10,R=10,n=labels.length,sx=i=>L+i*(W-L-R)/Math.max(n-1,1),sy=v=>T+(H-T-B)*(1-v/100);
+  let g='';[0,25,50,75,100].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="${C.soft}"/><text x="${L-6}" y="${sy(v)+3}" font-size="9" text-anchor="end" fill="#7189AD">${v}%</text>`);
+  labels.forEach((l,i)=>{if(n<=12||i%Math.ceil(n/10)===0)g+=`<text x="${sx(i)}" y="${H-6}" font-size="9" text-anchor="middle" fill="#7189AD">${l}</text>`;});
+  series.forEach(sr=>{const pts=sr.pts.map((v,i)=>v===null?null:`${sx(i)},${sy(v)}`);let d='',open=true;pts.forEach(p=>{if(p===null){open=true;return;}d+=(open?'M':'L')+p;open=false;});
+    g+=`<path d="${d}" fill="none" stroke="${sr.c}" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="${sr.dash||''}"/>`;
+    pts.forEach((p,i)=>{if(p)g+=`<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="2.5" fill="${sr.c}"/>`;});});
+  return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+}
+function hbars(rows,max){ // [{l,v,c,sub}]
+  return `<svg viewBox="0 0 520 ${rows.length*30+6}">${rows.map((r,i)=>{const y=i*30,w=max?Math.max(r.v/max*330,1):1;return `<text x="0" y="${y+18}" font-size="12" font-weight="600" fill="${C.ink}">${r.l}</text><rect x="140" y="${y+7}" width="330" height="14" rx="4" fill="${C.soft}"/><rect x="140" y="${y+7}" width="${w}" height="14" rx="4" fill="${r.c}"/><text x="478" y="${y+18}" font-size="11" fill="#34507A">${r.sub}</text>`;}).join('')}</svg>`;
+}
+function renderBI(){
+  const el=document.getElementById('bi');if(!el)return;
+  const from=biFrom(),to=TODAY;
+  const acts=allActivities(from,to);
+  const tasks=acts.filter(a=>a.type==='Tarea'),ru=acts.filter(a=>a.type==='Rutina');
+  const done=acts.filter(a=>a.done).length,rate=pct(done,acts.length);
+  // periodo anterior para variación
+  const days=Math.round((to-from)/864e5)+1,pf=addDays(from,-days),pt=addDays(from,-1);
+  const prev=allActivities(pf,pt),prate=pct(prev.filter(a=>a.done).length,prev.length);
+  const delta=rate-prate;
+  const overdue=tasks.filter(t=>!t.done&&t.date<fmt(TODAY)).length;
+  const altaP=tasks.filter(t=>t.prio==='alta'&&!t.done).length;
+  const avgDay=(acts.length/days).toFixed(1);
+  // tendencia semanal (tareas y rutinas)
+  const wk=[],lbl=[];const nW=Math.min(Math.ceil(days/7),16);
+  for(let k=nW-1;k>=0;k--){const ws=addDays(monday(TODAY),-7*k),we=addDays(ws,6);const a=allActivities(ws,we<TODAY?we:TODAY);const t=a.filter(x=>x.type==='Tarea'),r=a.filter(x=>x.type==='Rutina');
+    wk.push({t:t.length?pct(t.filter(x=>x.done).length,t.length):null,r:r.length?pct(r.filter(x=>x.done).length,r.length):null,all:a.length?pct(a.filter(x=>x.done).length,a.length):null});lbl.push(L(ws,{day:'numeric',month:'short'}));}
+  // proyección: regresión lineal sobre 'all' + 4 semanas futuras
+  const xs=[],ys=[];wk.forEach((w,i)=>{if(w.all!==null){xs.push(i);ys.push(w.all);}});
+  let slope=0,icpt=rate;if(xs.length>1){const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;const num=xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0),den=xs.reduce((a,x)=>a+(x-mx)**2,0);slope=den?num/den:0;icpt=my-slope*mx;}
+  const projPts=wk.map(()=>null),projL=[...lbl];
+  const lastIdx=wk.length-1;projPts[lastIdx]=wk[lastIdx].all;
+  for(let k=1;k<=4;k++){const v=Math.max(0,Math.min(100,Math.round(icpt+slope*(lastIdx+k))));projPts.push(v);projL.push(L(addDays(monday(TODAY),7*k),{day:'numeric',month:'short'}));}
+  const pad=wk.map(w=>w.all).concat([null,null,null,null]),padT=wk.map(w=>w.t).concat([null,null,null,null]),padR=wk.map(w=>w.r).concat([null,null,null,null]);
+  const proj4=projPts[projPts.length-1];
+  // proyección fin de mes
+  const mEnd=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,0),mStart=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+  const mActs=allActivities(mStart,TODAY),mRate=pct(mActs.filter(a=>a.done).length,mActs.length);
+  const remaining=allActivities(addDays(TODAY,1),mEnd).length+store.tasks.filter(t=>t.date.startsWith(monthKey(TODAY))&&t.date>fmt(TODAY)).length*0;
+  const projMonthDone=Math.round(mActs.filter(a=>a.done).length+remaining*(mRate/100));
+  const projMonthRate=pct(projMonthDone,mActs.length+remaining);
+  // pendiente proyectado: días para cerrar el backlog al ritmo actual
+  const pend=store.tasks.filter(t=>!t.done&&t.date<=fmt(TODAY)).length;
+  const doneLast14=store.tasks.filter(t=>t.done&&t.date>=fmt(addDays(TODAY,-13))&&t.date<=fmt(TODAY)).length;
+  const velocity=doneLast14/14;
+  const daysToClear=pend?(velocity>0?Math.ceil(pend/velocity):null):0;
+  // por prioridad
+  const byP=['alta','media','baja'].map(p=>{const l=tasks.filter(t=>t.prio===p);return {l:'Prioridad '+p,v:l.length,c:C[p],sub:`${l.filter(t=>t.done).length}/${l.length} hechas`};});
+  // por día de semana
+  const byD=DN.map((n,i)=>{const l=acts.filter(a=>wd(parse(a.date))===i);return {l:n,v:l.length?pct(l.filter(a=>a.done).length,l.length):0,c:C.media,sub:`${l.length} act.`};});
+  // por rutina
+  const byR=store.routines.map(r=>{const l=ru.filter(a=>a.id===r.id);return {l:r.title.slice(0,18),v:l.length?pct(l.filter(a=>a.done).length,l.length):0,c:C.rt,sub:`${l.filter(a=>a.done).length}/${l.length}`};});
+  // tabla
+  let rows=acts.slice();
+  if(biType!=='todas')rows=rows.filter(a=>a.type===biType);
+  if(biState==='hechas')rows=rows.filter(a=>a.done);if(biState==='pendientes')rows=rows.filter(a=>!a.done);
+  if(biQ)rows=rows.filter(a=>a.title.toLowerCase().includes(biQ));
+  rows.sort((a,b)=>{const va=a[biSort],vb=b[biSort];return (va>vb?1:va<vb?-1:0)*biDir;});
+  const th=(k,l)=>`<th data-s="${k}" class="${biSort===k?'s':''}">${l}</th>`;
+  const rangeL=biRange===365?'este año':`últimos ${biRange} días`;
+  el.innerHTML=`
+  <div class="bi-sec"><h3>Indicadores clave · ${rangeL}</h3><div class="tiles">
+    <div class="card tile" style="border-color:${C.ok}"><small>Cumplimiento global</small><b>${rate}%</b><span class="d ${delta>=0?'up':'dn'}">${delta>=0?'▲':'▼'} ${Math.abs(delta)} pts vs. periodo anterior</span></div>
+    <div class="card tile"><small>Actividades totales</small><b>${acts.length}</b><span class="d muted">${tasks.length} tareas · ${ru.length} rutinas</span></div>
+    <div class="card tile" style="border-color:${C.ink}"><small>Completadas</small><b>${done}</b><span class="d muted">${avgDay} actividades/día</span></div>
+    <div class="card tile" style="border-color:${C.alta}"><small>Tareas vencidas</small><b>${overdue}</b><span class="d muted">sin completar</span></div>
+    <div class="card tile" style="border-color:${C.alta}"><small>Alta prioridad abierta</small><b>${altaP}</b><span class="d muted">requieren acción</span></div>
+    <div class="card tile" style="border-color:${C.rt}"><small>Rutinas cumplidas</small><b>${pct(ru.filter(a=>a.done).length,ru.length)}%</b><span class="d muted">${ru.filter(a=>a.done).length}/${ru.length}</span></div>
+  </div></div>
+
+  <div class="bi-sec"><h3>Proyecciones</h3><div class="proj">
+    <div class="card"><h4>Cumplimiento en 4 semanas</h4><div class="v">${proj4}%<small>${slope>0.5?'tendencia al alza':slope<-0.5?'tendencia a la baja':'estable'}</small></div><p>Regresión lineal sobre tu cumplimiento semanal reciente (${slope>=0?'+':''}${slope.toFixed(1)} pts/semana).</p></div>
+    <div class="card"><h4>Cierre de ${L(TODAY,{month:'long'})}</h4><div class="v">${projMonthRate}%<small>≈ ${projMonthDone} completadas</small></div><p>Si mantienes el ritmo actual del mes (${mRate}%) con las ${remaining} actividades que faltan por vencer.</p></div>
+    <div class="card"><h4>Backlog de tareas</h4><div class="v">${pend}<small>${daysToClear===0?'al día':daysToClear===null?'sin ritmo reciente':'≈ '+daysToClear+' días para cerrarlo'}</small></div><p>Velocidad: ${(velocity*7).toFixed(1)} tareas completadas por semana (últimos 14 días).</p></div>
+  </div></div>
+
+  <div class="bi-sec"><h3>Tendencias</h3><div class="bi-grid two">
+    <div class="card chart"><h4>Cumplimiento semanal y proyección</h4><p>Porcentaje de actividades completadas por semana. La línea punteada es la proyección.</p>
+      ${lineChart([{pts:padT,c:C.media},{pts:padR,c:C.rt},{pts:pad,c:C.ink},{pts:projPts,c:C.ink,dash:'5 4'}],projL)}
+      <div class="lg"><span><i style="background:${C.ink}"></i>Global</span><span><i style="background:${C.media}"></i>Tareas</span><span><i style="background:${C.rt}"></i>Rutinas</span><span><i style="border-top:2px dashed ${C.ink};height:0"></i>Proyección</span></div></div>
+    <div class="card chart"><h4>Estado general</h4><p>Distribución de todas las actividades.</p>${donut([{v:done,c:C.ok},{v:overdue,c:C.alta},{v:acts.length-done-overdue,c:C.line}],acts.length,rate+'%')}
+      <div class="lg" style="justify-content:center"><span><i style="background:${C.ok}"></i>Hechas ${done}</span><span><i style="background:${C.alta}"></i>Vencidas ${overdue}</span><span><i style="background:${C.line}"></i>Pendientes ${acts.length-done-overdue}</span></div></div>
+  </div></div>
+
+  <div class="bi-sec"><h3>Desglose</h3><div class="bi-grid">
+    <div class="card chart"><h4>Tareas por prioridad</h4><p>Volumen y cuántas están hechas.</p>${hbars(byP,Math.max(...byP.map(r=>r.v),1))}</div>
+    <div class="card chart"><h4>Cumplimiento por día de la semana</h4><p>¿Qué días rindes mejor?</p>${hbars(byD,100)}</div>
+    <div class="card chart"><h4>Cumplimiento por rutina</h4><p>Actividades repetitivas.</p>${byR.length?hbars(byR,100):'<div class="empty">Sin rutinas</div>'}</div>
+  </div></div>
+
+  <div class="bi-sec"><h3>Resumen de todas las actividades · ${rows.length} registros</h3><div class="card">
+    <div class="tbl-tools"><input id="bi-q" placeholder="Buscar…" value="${esc(biQ)}">
+      <select id="bi-type"><option value="todas" ${biType==='todas'?'selected':''}>Tareas y rutinas</option><option value="Tarea" ${biType==='Tarea'?'selected':''}>Solo tareas</option><option value="Rutina" ${biType==='Rutina'?'selected':''}>Solo rutinas</option></select>
+      <select id="bi-state"><option value="todas" ${biState==='todas'?'selected':''}>Todos los estados</option><option value="hechas" ${biState==='hechas'?'selected':''}>Hechas</option><option value="pendientes" ${biState==='pendientes'?'selected':''}>Pendientes</option></select></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr>${th('date','Fecha')}${th('type','Tipo')}${th('title','Actividad')}${th('prio','Prioridad / Frecuencia')}${th('done','Estado')}</tr></thead><tbody>
+    ${rows.slice(0,300).map(a=>`<tr><td class="num">${L(parse(a.date),{day:'2-digit',month:'short',year:'2-digit'})}</td><td><span class="tag" style="${a.type==='Rutina'?'background:#DCE9F8;color:'+C.rt:''}">${a.type}</span></td><td>${esc(a.title)}</td><td>${a.type==='Tarea'?`<i class="dot ${a.prio}"></i> ${a.prio}`:a.prio}</td><td><span class="tag ${a.done?'ok':'pend'}">${a.done?'Hecha':(a.date<fmt(TODAY)?'Vencida':'Pendiente')}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Sin registros para estos filtros.</td></tr>'}
+    </tbody></table></div>${rows.length>300?'<div class="muted" style="padding:10px 12px;font-size:12px">Mostrando 300 de '+rows.length+'.</div>':''}</div></div>`;
+  el.querySelector('#bi-q').oninput=e=>{biQ=e.target.value.toLowerCase();const pos=e.target.selectionStart;renderBI();const q=el.querySelector('#bi-q');q.focus();q.setSelectionRange(pos,pos);};
+  el.querySelector('#bi-type').onchange=e=>{biType=e.target.value;renderBI();};
+  el.querySelector('#bi-state').onchange=e=>{biState=e.target.value;renderBI();};
+  el.querySelectorAll('th[data-s]').forEach(t=>t.onclick=()=>{if(biSort===t.dataset.s)biDir*=-1;else{biSort=t.dataset.s;biDir=1;}renderBI();});
+}
+document.getElementById('bi-range').onchange=e=>{biRange=+e.target.value;renderBI();};
+document.getElementById('bi-print').onclick=()=>{showView('panel');setTimeout(()=>window.print(),100);};
+
+/* ---------- PRIVACIDAD (panel) ---------- */
+function renderPrivacy(){
+  $('pv-autolock').value=String(store.autoLock);
+  $('pv-terms').value=(store.banned||[]).join(', ');
+  $('pv-terms-n').textContent=store.banned.length?`${store.banned.length} término(s) personal(es) activo(s)`:'';
+}
+$('pv-autolock').onchange=e=>{store.autoLock=+e.target.value;save();resetIdle();toast(store.autoLock?`Bloqueo automático: ${store.autoLock} min`:'Bloqueo automático desactivado');};
+$('pv-terms-save').onclick=()=>{
+  store.banned=[...new Set($('pv-terms').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean))];
+  save();renderPrivacy();toast('Términos guardados');
+};
+$('pv-change').onclick=async()=>{
+  const o=$('pv-old').value.trim(),n=$('pv-new').value.trim(),n2=$('pv-new2').value.trim();
+  if(!validPin(n)){toast('El nuevo PIN debe tener 4–8 dígitos',2600);return;}
+  if(n!==n2){toast('Los dos PIN nuevos no coinciden',2600);return;}
+  try{await decryptBlob(o,localStorage.getItem(ENC));}catch(e){toast('PIN actual incorrecto',2600);return;}
+  keySalt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(n,keySalt);
+  dirty=true;await flush();
+  ['pv-old','pv-new','pv-new2'].forEach(id=>$(id).value='');
+  toast('PIN actualizado · datos re-cifrados');
+};
+$('pv-export').onclick=async()=>{
+  await flush();const raw=localStorage.getItem(ENC);
+  try{await navigator.clipboard.writeText(raw);toast('Copia cifrada copiada al portapapeles');}
+  catch(e){$('pv-import').value=raw;$('pv-import').select();toast('Copia lista abajo: selecciónala y cópiala',3000);}
+};
+$('pv-download').onclick=async()=>{
+  await flush();const raw=localStorage.getItem(ENC);
+  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(raw);
+  a.download=`everyday-backup-${fmt(TODAY)}.json`;document.body.appendChild(a);a.click();a.remove();
+  toast('Descargando copia cifrada');
+};
+$('pv-restore').onclick=async()=>{
+  const raw=$('pv-import').value.trim(),pin=$('pv-import-pin').value.trim();
+  if(!raw){toast('Pega primero una copia de seguridad');return;}
+  if(!validPin(pin)){toast('Indica el PIN de esa copia');return;}
+  try{
+    const r=await decryptBlob(pin,raw);
+    if(!confirm('Esto reemplazará todos los datos actuales por los de la copia. ¿Continuar?'))return;
+    store=r.data;dirty=true;await flush();   // se re-cifra con el PIN actual
+    $('pv-import').value='';$('pv-import-pin').value='';
+    renderAll();renderPrivacy();toast('Copia restaurada');
+  }catch(e){toast('No se pudo leer la copia: PIN o formato incorrecto',3000);}
+};
+$('pv-wipe').onclick=()=>{
+  if($('pv-wipe-txt').value.trim()!=='BORRAR'){toast('Escribe BORRAR para confirmar');return;}
+  if(!confirm('Se eliminarán TODOS los datos y el PIN de este navegador. Esta acción no se puede deshacer.'))return;
+  clearTimeout(saveTimer);dirty=false;cryptoKey=null;
+  localStorage.removeItem(ENC);localStorage.removeItem(LEGACY);
+  store=emptyStore();$('pv-wipe-txt').value='';renderAll();showLock();toast('Todos los datos fueron eliminados');
+};
+
+/* ---------- utilidades ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let tt;function toast(msg,ms=1600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),ms);}
+
+/* ---------- arranque ---------- */
+if(!(window.crypto&&crypto.subtle)){
+  $('lk-title').textContent='Navegador no compatible';
+  $('lk-sub').textContent='Este navegador no ofrece cifrado (Web Crypto). Abre la aplicación en Chrome, Edge, Firefox o Safari actualizados.';
+  $('lk-pin').hidden=true;$('lk-go').hidden=true;
+}else{
+  showLock();
+}
+</script>
+</body>
+</html>
