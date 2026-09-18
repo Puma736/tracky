@@ -353,6 +353,19 @@
   .priv-grid .cats b{color:var(--ink)}
   .priv-status{display:inline-flex;align-items:center;gap:6px;background:#E3F5F1;color:var(--ok);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
   .priv-status i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .saved-data{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-s);background:#F7FAFE;padding:10px;font-size:12px}
+  .saved-data h4{font-size:13px;margin:8px 0 4px;color:var(--ink)}
+  .saved-data h4:first-child{margin-top:0}
+  .saved-data ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+  .saved-data li{padding:4px 6px;border-bottom:1px solid var(--line-soft);color:var(--ink-2)}
+  .saved-data .empty-data{color:var(--ink-3);font-style:italic}
+  .backup-card{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(280px,.85fr) minmax(360px,1.5fr);gap:20px;align-items:start}
+  .backup-card>h3{grid-column:1/-1}
+  .backup-controls{display:flex;flex-direction:column;gap:10px}
+  .backup-preview{min-width:0}
+  .backup-preview h3{margin-bottom:10px}
+  .backup-preview .saved-data{min-height:360px;max-height:520px}
+  @media (max-width:720px){.backup-card{grid-template-columns:1fr}}
 
   /* ---------- Toast ---------- */
   .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:var(--navy);color:#fff;padding:10px 16px;border-radius:var(--r-s);font-size:14px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none}
@@ -659,15 +672,22 @@
           <textarea id="pv-terms" placeholder="ej. apuesta, casino, …"></textarea>
           <div class="row"><button class="btn primary" type="button" id="pv-terms-save">Guardar términos</button><span class="muted" style="font-size:12px" id="pv-terms-n"></span></div>
         </div>
-        <div class="card">
+        <div class="card backup-card">
           <h3><span class="ico">💾</span>Copia de seguridad</h3>
+          <div class="backup-controls">
           <p>La copia se genera <b>cifrada con tu PIN actual</b>: puedes guardarla en cualquier sitio sin exponer su contenido. Para restaurarla necesitarás el PIN con el que se creó.</p>
-          <div class="row"><button class="btn" type="button" id="pv-export">Copiar copia cifrada</button><button class="btn" type="button" id="pv-download">Descargar archivo</button></div>
+          <div class="row"><button class="btn" type="button" id="pv-export">Copiar copia cifrada</button><button class="btn" type="button" id="pv-download">Descargar archivo</button><button class="btn primary" type="button" id="pv-excel">Descargar para Excel</button></div>
           <textarea id="pv-import" placeholder="Pega aquí una copia de seguridad para restaurarla…"></textarea>
           <div class="row"><input type="password" id="pv-import-pin" inputmode="numeric" maxlength="8" placeholder="PIN de esa copia" autocomplete="off" style="width:160px"><button class="btn" type="button" id="pv-restore">Restaurar</button></div>
           <h3 style="margin-top:8px"><span class="ico" style="background:#FBE9E7;color:var(--alta)">🗑</span>Borrar todo</h3>
           <p>Elimina de forma definitiva todos los datos y el PIN de este navegador. Escribe <b>BORRAR</b> para confirmar.</p>
           <div class="row"><input type="text" id="pv-wipe-txt" placeholder="BORRAR" style="width:140px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-s)"><button class="btn danger" type="button" id="pv-wipe">Borrar todo</button></div>
+          </div>
+          <div class="backup-preview">
+            <h3><span class="ico">📋</span>Datos guardados</h3>
+            <button class="btn" type="button" id="pv-show-data">Mostrar / ocultar datos</button>
+            <div class="saved-data" id="pv-saved-data" hidden></div>
+          </div>
         </div>
       </div>
     </section>
@@ -1462,6 +1482,22 @@ function renderPrivacy(){
   $('pv-terms').value=(store.banned||[]).join(', ');
   $('pv-terms-n').textContent=store.banned.length?`${store.banned.length} término(s) personal(es) activo(s)`:'';
 }
+function renderSavedData(){
+  const sections=[];
+  const addSection=(title,items)=>sections.push(`<h4>${title}</h4><ul>${items.length?items.join(''):'<li class="empty-data">No hay datos guardados.</li>'}</ul>`);
+  addSection('Tareas',store.tasks.map(t=>`<li>${esc(t.date)}${t.time?' · '+esc(t.time):''} · ${esc(t.title)} · ${esc(t.prio)} · ${t.done?'Completada':'Pendiente'}</li>`));
+  addSection('Notas',Object.entries(store.notes).filter(([,text])=>text).map(([date,text])=>`<li>${esc(date)} · ${esc(text)}</li>`));
+  addSection('Objetivos semanales',Object.entries(store.weekGoals).flatMap(([date,goals])=>goals.map(g=>`<li>${esc(date)} · ${esc(g.text)} · ${g.done?'Completado':'Pendiente'}</li>`)));
+  addSection('Metas mensuales',Object.entries(store.monthGoals).flatMap(([date,goals])=>goals.map(g=>`<li>${esc(date)} · ${esc(g.text)} · ${g.done?'Completada':'Pendiente'}</li>`)));
+  addSection('Rutinas',store.routines.map(r=>`<li>${esc(r.created)} · ${esc(r.title)} · ${esc(r.freq)}</li>`));
+  $('pv-saved-data').innerHTML=sections.join('');
+}
+$('pv-show-data').onclick=()=>{
+  const panel=$('pv-saved-data');
+  renderSavedData();
+  panel.hidden=!panel.hidden;
+  $('pv-show-data').textContent=panel.hidden?'Ver datos guardados':'Ocultar datos guardados';
+};
 $('pv-autolock').onchange=e=>{store.autoLock=+e.target.value;save();resetIdle();toast(store.autoLock?`Bloqueo automático: ${store.autoLock} min`:'Bloqueo automático desactivado');};
 $('pv-terms-save').onclick=()=>{
   store.banned=[...new Set($('pv-terms').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean))];
@@ -1487,6 +1523,18 @@ $('pv-download').onclick=async()=>{
   const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(raw);
   a.download=`everyday-backup-${fmt(TODAY)}.json`;document.body.appendChild(a);a.click();a.remove();
   toast('Descargando copia cifrada');
+};
+$('pv-excel').onclick=()=>{
+  const rows=[['Tipo','Fecha','Hora','Título o contenido','Prioridad / frecuencia','Estado']];
+  store.tasks.forEach(t=>rows.push(['Tarea',t.date,t.time||'',t.title,t.prio,t.done?'Completada':'Pendiente']));
+  Object.entries(store.notes).forEach(([date,text])=>{if(text)rows.push(['Nota',date,'',text,'','']);});
+  Object.entries(store.weekGoals).forEach(([date,goals])=>goals.forEach(g=>rows.push(['Objetivo semanal',date,'',g.text,'',g.done?'Completado':'Pendiente'])));
+  Object.entries(store.monthGoals).forEach(([date,goals])=>goals.forEach(g=>rows.push(['Meta mensual',date,'',g.text,'',g.done?'Completada':'Pendiente'])));
+  store.routines.forEach(r=>rows.push(['Rutina',r.created,'',r.title,r.freq,r.days.map(i=>DN[i]).join(', ')]));
+  const csv='\\uFEFF'+rows.map(row=>row.map(value=>`"${String(value??'').replace(/"/g,'""')}"`).join(';')).join('\\r\\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`everyday-datos-${fmt(TODAY)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+  toast('Descargando datos para Excel');
 };
 $('pv-restore').onclick=async()=>{
   const raw=$('pv-import').value.trim(),pin=$('pv-import-pin').value.trim();
